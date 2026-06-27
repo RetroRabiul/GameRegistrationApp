@@ -17,6 +17,9 @@ import { EventListScreen } from '../screens/player/EventListScreen';
 import { EventDetailScreen } from '../screens/player/EventDetailScreen';
 import { MyRegistrationsScreen } from '../screens/player/MyRegistrationsScreen';
 import { PaymentScreen } from '../screens/player/PaymentScreen';
+import { EventsScreen } from '../screens/player/EventsScreen';
+import { RegisterScreen } from '../screens/player/RegisterScreen';
+import { ProfileScreen } from '../screens/player/ProfileScreen';
 
 import { AlertsScreen } from '../screens/AlertsScreen';
 import { ApiScreen } from '../screens/ApiScreen';
@@ -33,40 +36,28 @@ export type MainStackParamList = {
 };
 
 export type MainTabParamList = {
-  Hub: undefined;
-  Brackets: undefined;
-  Entry: undefined;
-  Alerts: undefined;
-  API: undefined;
+  Home: undefined;
+  Events: undefined;
+  Register: undefined;
+  Profile: undefined;
 };
 
 const Stack = createNativeStackNavigator<MainStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-const HubScreen: React.FC = () => {
+const HomeScreen: React.FC = () => {
   const { user } = useAuthStore();
   return user?.role === 'admin' ? <AdminDashboardScreen /> : <EventListScreen />;
-};
-
-const BracketsScreen: React.FC = () => {
-  const { user } = useAuthStore();
-  return user?.role === 'admin' ? <ManageEventsScreen /> : <MyRegistrationsScreen />;
-};
-
-const EntryScreen: React.FC = () => {
-  const { user } = useAuthStore();
-  return user?.role === 'admin' ? <ManageEventsScreen /> : <EventListScreen />;
 };
 
 const MainTabs: React.FC = () => {
   const { colors } = useTheme();
 
   const tabIcons: Record<string, string> = {
-    Hub: '◫',
-    Brackets: '⚔',
-    Entry: '⊕',
-    Alerts: '⚑',
-    API: '⟨⟩',
+    Home: '',
+    Events: '',
+    Register: '',
+    Profile: '◉',
   };
 
   return (
@@ -95,11 +86,10 @@ const MainTabs: React.FC = () => {
         },
       })}
     >
-      <Tab.Screen name="Hub" component={HubScreen} />
-      <Tab.Screen name="Brackets" component={BracketsScreen} />
-      <Tab.Screen name="Entry" component={EntryScreen} />
-      <Tab.Screen name="Alerts" component={AlertsScreen} />
-      <Tab.Screen name="API" component={ApiScreen} />
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Events" component={EventsScreen} />
+      <Tab.Screen name="Register" component={RegisterScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
 };
