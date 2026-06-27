@@ -33,6 +33,7 @@ const EventTabs: React.FC = () => {
         tabBarStyle: {
           backgroundColor: Colors.surface,
           borderTopColor: Colors.border,
+          borderTopWidth: 1,
           paddingBottom: 4,
           height: 60,
         },
@@ -66,8 +67,8 @@ export const PlayerNavigator: React.FC = () => {
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: Colors.surface },
-        headerTintColor: Colors.text,
-        headerTitleStyle: { fontWeight: '700' },
+        headerTintColor: Colors.primary,
+        headerTitleStyle: { fontWeight: '700', color: Colors.text },
         contentStyle: { backgroundColor: Colors.background },
       }}
     >

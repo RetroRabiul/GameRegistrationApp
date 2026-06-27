@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
-import { Animated, TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, Easing } from 'react-native';
+import { Animated, TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Colors, FontSize, Spacing, BorderRadius } from '../constants';
 
 interface ButtonProps {
@@ -20,7 +21,27 @@ export const Button: React.FC<ButtonProps> = ({
   style,
 }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const glowAnim = useRef(new Animated.Value(0.5)).current;
   const isOutline = variant === 'outline';
+
+  React.useEffect(() => {
+    if (!disabled && variant === 'primary') {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(glowAnim, {
+            toValue: 1,
+            duration: 1500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(glowAnim, {
+            toValue: 0.5,
+            duration: 1500,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }
+  }, [disabled, variant]);
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
@@ -40,31 +61,78 @@ export const Button: React.FC<ButtonProps> = ({
     }).start();
   };
 
+  const getGlowStyle = () => {
+    if (variant === 'primary') {
+      return {
+        shadowColor: Colors.neonGlow,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: glowAnim,
+        shadowRadius: 15,
+        elevation: 8,
+      };
+    }
+    return {};
+  };
+
+  const getGradientColors = (): [string, string] => {
+    switch (variant) {
+      case 'primary':
+        return [Colors.gradient1, Colors.gradient2];
+      case 'secondary':
+        return [Colors.secondary, Colors.accent];
+      case 'danger':
+        return [Colors.error, '#CC0033'];
+      default:
+        return [Colors.gradient1, Colors.gradient2];
+    }
+  };
+
+  const renderButtonContent = () => {
+    if (loading) {
+      return <ActivityIndicator color={isOutline ? Colors.primary : Colors.white} />;
+    }
+    return (
+      <Text style={[styles.text, isOutline && styles.outlineText]}>
+        {title}
+      </Text>
+    );
+  };
+
+  if (isOutline) {
+    return (
+      <Animated.View style={[{ transform: [{ scale: scaleAnim }] }]}>
+        <TouchableOpacity
+          style={[styles.button, styles.outline, disabled && styles.disabled, style]}
+          onPress={onPress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          disabled={disabled || loading}
+          activeOpacity={0.7}
+        >
+          {renderButtonContent()}
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  }
+
   return (
-    <Animated.View style={[{ transform: [{ scale: scaleAnim }] }]}>
+    <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, getGlowStyle()]}>
       <TouchableOpacity
-        style={[
-          styles.button,
-          variant === 'primary' && styles.primary,
-          variant === 'secondary' && styles.secondary,
-          variant === 'outline' && styles.outline,
-          variant === 'danger' && styles.danger,
-          disabled && styles.disabled,
-          style,
-        ]}
         onPress={onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         disabled={disabled || loading}
         activeOpacity={0.7}
+        style={disabled && styles.disabled}
       >
-        {loading ? (
-          <ActivityIndicator color={isOutline ? Colors.primary : Colors.white} />
-        ) : (
-          <Text style={[styles.text, isOutline && styles.outlineText]}>
-            {title}
-          </Text>
-        )}
+        <LinearGradient
+          colors={getGradientColors()}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.button, style]}
+        >
+          {renderButtonContent()}
+        </LinearGradient>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -78,20 +146,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 50,
-  },
-  primary: {
-    backgroundColor: Colors.primary,
-  },
-  secondary: {
-    backgroundColor: Colors.secondary,
+    borderWidth: 1,
+    borderColor: Colors.primary,
   },
   outline: {
     backgroundColor: 'transparent',
     borderWidth: 2,
     borderColor: Colors.primary,
-  },
-  danger: {
-    backgroundColor: Colors.error,
   },
   disabled: {
     opacity: 0.5,
@@ -99,7 +160,9 @@ const styles = StyleSheet.create({
   text: {
     color: Colors.white,
     fontSize: FontSize.md,
-    fontWeight: '600',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   outlineText: {
     color: Colors.primary,

@@ -27,8 +27,8 @@ export const AdminNavigator: React.FC = () => {
     <Stack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: Colors.surface },
-        headerTintColor: Colors.text,
-        headerTitleStyle: { fontWeight: '700' },
+        headerTintColor: Colors.primary,
+        headerTitleStyle: { fontWeight: '700', color: Colors.text },
         contentStyle: { backgroundColor: Colors.background },
         headerRight: () => (
           <TouchableOpacity onPress={signOut} style={styles.logoutButton}>
