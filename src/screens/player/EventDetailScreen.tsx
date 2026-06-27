@@ -2,29 +2,29 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { Colors, Spacing, FontSize, BorderRadius } from '../../constants';
+import { Spacing, FontSize, BorderRadius } from '../../constants';
 import { Button } from '../../components/Button';
+import { Card } from '../../components/Card';
+import { PulsingDot } from '../../components/PulsingDot';
 import { useRegistrationStore } from '../../store/registrationStore';
+import { useTheme } from '../../theme/ThemeContext';
 import { GameEvent } from '../../types';
-
-type PlayerStackParamList = {
-  EventList: undefined;
-  EventDetail: { event: GameEvent };
-  MyRegistrations: undefined;
-};
+import { MainStackParamList } from '../../navigation/MainNavigator';
 
 interface EventDetailScreenProps {
-  navigation: NativeStackNavigationProp<PlayerStackParamList, 'EventDetail'>;
-  route: RouteProp<PlayerStackParamList, 'EventDetail'>;
+  navigation: NativeStackNavigationProp<MainStackParamList, 'EventDetail'>;
+  route: RouteProp<MainStackParamList, 'EventDetail'>;
 }
 
 export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ navigation, route }) => {
   const { event } = route.params;
   const { registerForEvent, loading } = useRegistrationStore();
+  const { colors } = useTheme();
   const [registering, setRegistering] = useState(false);
 
   const slotsLeft = event.max_slots - event.filled_slots;
   const isFull = slotsLeft <= 0;
+  const isLive = event.status === 'ongoing';
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -50,7 +50,12 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ navigation
           {
             text: 'Pay Now',
             onPress: () => {
-              navigation.navigate('MyRegistrations');
+              navigation.navigate('Payment', {
+                eventId: event.id,
+                registrationId: result.registrationId!,
+                amount: event.price,
+                eventTitle: event.title,
+              });
             },
           },
         ]
@@ -61,79 +66,84 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ navigation
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.imagePlaceholder}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.imagePlaceholder, { backgroundColor: colors.primary + '15' }]}>
         <Text style={styles.imageIcon}>🎮</Text>
       </View>
 
       <View style={styles.content}>
         <View style={styles.statusRow}>
-          <View style={[
-            styles.statusBadge,
-            event.status === 'upcoming' && styles.statusUpcoming,
-          ]}>
-            <Text style={styles.statusText}>{event.status}</Text>
+          {isLive && (
+            <View style={styles.liveBadge}>
+              <PulsingDot color={colors.primary} size={6} />
+              <Text style={[styles.liveText, { color: colors.primary }]}>LIVE</Text>
+            </View>
+          )}
+          <View
+            style={[
+              styles.statusBadge,
+              {
+                borderColor: colors.primary,
+                backgroundColor: colors.primary + '15',
+              },
+            ]}
+          >
+            <Text style={[styles.statusText, { color: colors.primary }]}>
+              {event.status}
+            </Text>
           </View>
           {isFull && (
-            <View style={styles.fullBadge}>
-              <Text style={styles.fullText}>FULL</Text>
+            <View style={[styles.fullBadge, { backgroundColor: colors.error + '15', borderColor: colors.error }]}>
+              <Text style={[styles.fullText, { color: colors.error }]}>FULL</Text>
             </View>
           )}
         </View>
 
-        <Text style={styles.title}>{event.title}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{event.title}</Text>
 
-        <View style={styles.infoCard}>
+        <Card style={styles.infoCard}>
           <View style={styles.infoRow}>
-            <Text style={styles.infoIcon}>📅</Text>
-            <View>
-              <Text style={styles.infoLabel}>Date</Text>
-              <Text style={styles.infoValue}>{formatDate(event.date)}</Text>
-            </View>
+            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Date</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>{formatDate(event.date)}</Text>
           </View>
+          <View style={[styles.infoDivider, { backgroundColor: colors.surfaceVariant }]} />
           <View style={styles.infoRow}>
-            <Text style={styles.infoIcon}>🕐</Text>
-            <View>
-              <Text style={styles.infoLabel}>Time</Text>
-              <Text style={styles.infoValue}>{event.time?.substring(0, 5)}</Text>
-            </View>
+            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Time</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>{event.time?.substring(0, 5)}</Text>
           </View>
+          <View style={[styles.infoDivider, { backgroundColor: colors.surfaceVariant }]} />
           <View style={styles.infoRow}>
-            <Text style={styles.infoIcon}>📍</Text>
-            <View>
-              <Text style={styles.infoLabel}>Location</Text>
-              <Text style={styles.infoValue}>{event.location}</Text>
-            </View>
+            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Location</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>{event.location}</Text>
           </View>
+          <View style={[styles.infoDivider, { backgroundColor: colors.surfaceVariant }]} />
           <View style={styles.infoRow}>
-            <Text style={styles.infoIcon}>👥</Text>
-            <View>
-              <Text style={styles.infoLabel}>Slots</Text>
-              <Text style={styles.infoValue}>
-                {event.filled_slots} / {event.max_slots} ({slotsLeft} remaining)
-              </Text>
-            </View>
+            <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Slots</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>
+              {event.filled_slots} / {event.max_slots} ({slotsLeft} remaining)
+            </Text>
           </View>
-        </View>
+        </Card>
 
-        <View style={styles.descriptionCard}>
-          <Text style={styles.descriptionTitle}>About this Event</Text>
-          <Text style={styles.description}>{event.description}</Text>
-        </View>
+        <Card style={styles.descriptionCard}>
+          <Text style={[styles.descriptionTitle, { color: colors.text }]}>About this Event</Text>
+          <Text style={[styles.description, { color: colors.textMuted }]}>{event.description}</Text>
+        </Card>
 
-        <View style={styles.priceCard}>
+        <Card style={styles.priceCard}>
           <View>
-            <Text style={styles.priceLabel}>Registration Fee</Text>
-            <Text style={styles.priceValue}>৳{event.price}</Text>
+            <Text style={[styles.priceLabel, { color: colors.textMuted }]}>Registration Fee</Text>
+            <Text style={[styles.priceValue, { color: colors.primary }]}>৳{event.price}</Text>
           </View>
           <Button
             title={isFull ? 'Event Full' : 'Register Now'}
             onPress={handleRegister}
             loading={registering || loading}
             disabled={isFull}
+            fullWidth={false}
             style={styles.registerButton}
           />
-        </View>
+        </Card>
       </View>
     </ScrollView>
   );
@@ -142,11 +152,9 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ navigation
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   imagePlaceholder: {
     height: 200,
-    backgroundColor: Colors.primary + '20',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -154,120 +162,99 @@ const styles = StyleSheet.create({
     fontSize: 80,
   },
   content: {
-    padding: Spacing.lg,
+    padding: Spacing.xl,
   },
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
+    gap: Spacing.md,
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.metric,
+    borderWidth: 1,
+    borderColor: '#00E5FF',
+    backgroundColor: '#00E5FF15',
+  },
+  liveText: {
+    fontSize: FontSize.label,
+    fontWeight: '700',
+    marginLeft: Spacing.md,
   },
   statusBadge: {
-    paddingHorizontal: Spacing.sm,
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.sm,
-    marginRight: Spacing.sm,
-  },
-  statusUpcoming: {
-    backgroundColor: Colors.info + '20',
+    borderRadius: BorderRadius.metric,
+    borderWidth: 1,
   },
   statusText: {
-    fontSize: FontSize.xs,
-    fontWeight: '600',
+    fontSize: FontSize.label,
+    fontWeight: '700',
     textTransform: 'capitalize',
-    color: Colors.text,
   },
   fullBadge: {
-    paddingHorizontal: Spacing.sm,
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.error + '20',
+    borderRadius: BorderRadius.metric,
+    borderWidth: 1,
   },
   fullText: {
-    fontSize: FontSize.xs,
+    fontSize: FontSize.label,
     fontWeight: '700',
-    color: Colors.error,
   },
   title: {
-    fontSize: FontSize.xxl,
-    fontWeight: '800',
-    color: Colors.text,
-    marginBottom: Spacing.lg,
+    fontSize: FontSize.hero,
+    fontWeight: '900',
+    marginBottom: Spacing.xl,
   },
   infoCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: Spacing.xl,
   },
   infoRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: Spacing.md,
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.md,
   },
-  infoIcon: {
-    fontSize: 24,
-    marginRight: Spacing.md,
-    marginTop: 2,
+  infoDivider: {
+    height: 1,
   },
   infoLabel: {
-    fontSize: FontSize.xs,
-    color: Colors.textSecondary,
-    marginBottom: 2,
+    fontSize: FontSize.caption,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   infoValue: {
-    fontSize: FontSize.md,
-    fontWeight: '600',
-    color: Colors.text,
+    fontSize: FontSize.body,
+    fontWeight: '700',
   },
   descriptionCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    marginBottom: Spacing.xl,
   },
   descriptionTitle: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.cardTitle,
     fontWeight: '700',
-    color: Colors.text,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   description: {
-    fontSize: FontSize.md,
-    color: Colors.textSecondary,
+    fontSize: FontSize.body,
     lineHeight: 24,
   },
   priceCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
   },
   priceLabel: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    fontSize: FontSize.body,
     marginBottom: Spacing.xs,
   },
   priceValue: {
-    fontSize: FontSize.xxl,
-    fontWeight: '800',
-    color: Colors.primary,
+    fontSize: FontSize.hero,
+    fontWeight: '900',
   },
   registerButton: {
     minWidth: 160,

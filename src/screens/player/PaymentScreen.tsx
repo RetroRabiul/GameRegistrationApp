@@ -2,28 +2,25 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, Alert, ScrollView } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { Colors, Spacing, FontSize, BorderRadius } from '../../constants';
+import { Spacing, FontSize, BorderRadius } from '../../constants';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
+import { Card } from '../../components/Card';
 import { bkashService } from '../../lib/bkash';
 import { useRegistrationStore } from '../../store/registrationStore';
+import { useTheme } from '../../theme/ThemeContext';
 import { GameEvent } from '../../types';
-
-type PlayerStackParamList = {
-  EventList: undefined;
-  EventDetail: { event: GameEvent };
-  MyRegistrations: undefined;
-  Payment: { eventId: string; registrationId: string; amount: number; eventTitle: string };
-};
+import { MainStackParamList } from '../../navigation/MainNavigator';
 
 interface PaymentScreenProps {
-  navigation: NativeStackNavigationProp<PlayerStackParamList, 'Payment'>;
-  route: RouteProp<PlayerStackParamList, 'Payment'>;
+  navigation: NativeStackNavigationProp<MainStackParamList, 'Payment'>;
+  route: RouteProp<MainStackParamList, 'Payment'>;
 }
 
 export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route }) => {
   const { registrationId, amount, eventTitle } = route.params;
   const { updatePaymentStatus } = useRegistrationStore();
+  const { colors } = useTheme();
   const [bkashNumber, setBkashNumber] = useState('');
   const [processing, setProcessing] = useState(false);
   const [step, setStep] = useState<'input' | 'otp'>('input');
@@ -75,7 +72,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
       Alert.alert(
         'Payment Successful!',
         `Your payment of ৳${amount} for "${eventTitle}" has been confirmed.\n\nTransaction ID: ${response.transactionID}`,
-        [{ text: 'OK', onPress: () => navigation.navigate('MyRegistrations') }]
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } else {
       await bkashService.recordPayment(registrationId, amount, paymentId, '', 'failed');
@@ -85,20 +82,33 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
   };
 
   return (
-    <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.header}>
-        <Text style={styles.logo}>💳</Text>
-        <Text style={styles.title}>bKash Payment</Text>
-        <Text style={styles.subtitle}>Complete your registration payment</Text>
+        <Text style={[styles.logo, { color: colors.primary }]}>◈</Text>
+        <Text style={[styles.title, { color: colors.text }]}>bKash Payment</Text>
+        <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+          Complete your registration payment
+        </Text>
       </View>
 
-      <View style={styles.amountCard}>
-        <Text style={styles.amountLabel}>Amount to Pay</Text>
-        <Text style={styles.amountValue}>৳{amount}</Text>
-        <Text style={styles.eventName}>For: {eventTitle}</Text>
+      <View
+        style={[
+          styles.amountCard,
+          {
+            borderColor: colors.primary + '40',
+            backgroundColor: colors.primary + '0A',
+          },
+        ]}
+      >
+        <Text style={[styles.amountLabel, { color: colors.textMuted }]}>Amount to Pay</Text>
+        <Text style={[styles.amountValue, { color: colors.primary }]}>৳{amount}</Text>
+        <Text style={[styles.eventName, { color: colors.textMuted }]}>For: {eventTitle}</Text>
       </View>
 
-      <View style={styles.form}>
+      <Card style={styles.form}>
         {step === 'input' ? (
           <>
             <Input
@@ -112,14 +122,22 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
               title="Send Payment Request"
               onPress={handleInitiatePayment}
               loading={processing}
-              style={styles.payButton}
+              variant="secondary"
             />
           </>
         ) : (
           <>
-            <View style={styles.infoBox}>
-              <Text style={styles.infoText}>
-                ✅ Payment request sent to {bkashNumber}{'\n'}
+            <View
+              style={[
+                styles.infoBox,
+                {
+                  backgroundColor: colors.tertiary + '10',
+                  borderColor: colors.tertiary + '30',
+                },
+              ]}
+            >
+              <Text style={[styles.infoText, { color: colors.text }]}>
+                Payment request sent to {bkashNumber}{'\n'}
                 Check your bKash app and confirm the payment.
               </Text>
             </View>
@@ -134,7 +152,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
               title="Confirm Payment"
               onPress={handleConfirmPayment}
               loading={processing}
-              style={styles.payButton}
+              variant="secondary"
             />
             <Button
               title="Cancel"
@@ -144,10 +162,10 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
             />
           </>
         )}
-      </View>
+      </Card>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>
+        <Text style={[styles.footerText, { color: colors.textMuted }]}>
           Your payment is processed securely via bKash.
         </Text>
       </View>
@@ -158,91 +176,66 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   header: {
     alignItems: 'center',
-    padding: Spacing.lg,
+    padding: Spacing.xl,
     paddingBottom: Spacing.md,
   },
   logo: {
     fontSize: 48,
-    marginBottom: Spacing.sm,
+    fontWeight: '700',
+    marginBottom: Spacing.md,
   },
   title: {
-    fontSize: FontSize.xxl,
-    fontWeight: '800',
-    color: Colors.text,
+    fontSize: FontSize.hero,
+    fontWeight: '900',
     marginBottom: Spacing.xs,
   },
   subtitle: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    fontSize: FontSize.body,
   },
   amountCard: {
-    backgroundColor: Colors.primary + '10',
-    margin: Spacing.lg,
+    margin: Spacing.xl,
     marginTop: 0,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.primary + '30',
   },
   amountLabel: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    fontSize: FontSize.body,
     marginBottom: Spacing.xs,
   },
   amountValue: {
-    fontSize: FontSize.title,
-    fontWeight: '800',
-    color: Colors.primary,
+    fontSize: FontSize.display,
+    fontWeight: '900',
     marginBottom: Spacing.xs,
   },
   eventName: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    fontSize: FontSize.body,
   },
   form: {
-    backgroundColor: Colors.surface,
-    margin: Spacing.lg,
+    margin: Spacing.xl,
     marginTop: 0,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
   },
   infoBox: {
-    backgroundColor: Colors.success + '15',
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
+    borderRadius: BorderRadius.standard,
+    padding: Spacing.xl,
+    marginBottom: Spacing.xl,
     borderWidth: 1,
-    borderColor: Colors.success + '30',
   },
   infoText: {
-    fontSize: FontSize.sm,
-    color: Colors.text,
-    lineHeight: 20,
-  },
-  payButton: {
-    marginTop: Spacing.md,
-    backgroundColor: Colors.secondary,
+    fontSize: FontSize.body,
+    lineHeight: 22,
   },
   cancelButton: {
-    marginTop: Spacing.sm,
+    marginTop: Spacing.md,
   },
   footer: {
-    padding: Spacing.lg,
+    padding: Spacing.xl,
     alignItems: 'center',
   },
   footerText: {
-    fontSize: FontSize.xs,
-    color: Colors.textLight,
+    fontSize: FontSize.caption,
     textAlign: 'center',
   },
 });

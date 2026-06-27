@@ -1,26 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, RefreshControl, Alert } from 'react-native';
+import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Colors, Spacing, FontSize } from '../../constants';
+import { Spacing, FontSize } from '../../constants';
 import { EventCard } from '../../components/EventCard';
 import { AnimatedCard } from '../../components/AnimatedCard';
-import { AnimatedBackground } from '../../components/AnimatedBackground';
+import { Card } from '../../components/Card';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { useEventStore } from '../../store/eventStore';
+import { useTheme } from '../../theme/ThemeContext';
 import { GameEvent } from '../../types';
+import { MainStackParamList } from '../../navigation/MainNavigator';
 
-type PlayerStackParamList = {
-  EventList: undefined;
-  EventDetail: { event: GameEvent };
-  MyRegistrations: undefined;
-};
-
-interface EventListScreenProps {
-  navigation: NativeStackNavigationProp<PlayerStackParamList, 'EventList'>;
-}
-
-export const EventListScreen: React.FC<EventListScreenProps> = ({ navigation }) => {
+export const EventListScreen: React.FC = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const { events, loading, fetchEvents } = useEventStore();
+  const { colors } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -37,65 +32,74 @@ export const EventListScreen: React.FC<EventListScreenProps> = ({ navigation }) 
     navigation.navigate('EventDetail', { event });
   };
 
+  const upcomingEvents = events.filter(e => e.status === 'upcoming' || e.status === 'ongoing');
+
   if (loading && events.length === 0) {
     return <LoadingSpinner />;
   }
 
   return (
-    <AnimatedBackground>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Upcoming Events</Text>
-          <Text style={styles.subtitle}>{events.length} events available</Text>
-        </View>
-
-        {events.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>🎮</Text>
-            <Text style={styles.emptyText}>No events available yet</Text>
-            <Text style={styles.emptySubtext}>Check back later!</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={events.filter(e => e.status === 'upcoming')}
-            renderItem={({ item, index }) => (
-              <AnimatedCard delay={index * 100}>
-                <EventCard event={item} onPress={() => handleEventPress(item)} />
-              </AnimatedCard>
-            )}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContent}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
-            }
-          />
-        )}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.text }]}>Events</Text>
+        <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+          {upcomingEvents.length} events available
+        </Text>
       </View>
-    </AnimatedBackground>
+
+      {upcomingEvents.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Card style={styles.emptyCard}>
+            <Text style={[styles.emptyIcon, { color: colors.textMuted }]}>◫</Text>
+            <Text style={[styles.emptyText, { color: colors.text }]}>
+              No events available yet
+            </Text>
+            <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
+              Check back later!
+            </Text>
+          </Card>
+        </View>
+      ) : (
+        <FlatList
+          data={upcomingEvents}
+          renderItem={({ item, index }) => (
+            <AnimatedCard delay={index * 100}>
+              <EventCard event={item} onPress={() => handleEventPress(item)} />
+            </AnimatedCard>
+          )}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+            />
+          }
+        />
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   header: {
-    padding: Spacing.lg,
+    padding: Spacing.xl,
     paddingBottom: Spacing.md,
   },
   title: {
-    fontSize: FontSize.xxl,
-    fontWeight: '800',
-    color: Colors.text,
+    fontSize: FontSize.hero,
+    fontWeight: '900',
   },
   subtitle: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    fontSize: FontSize.body,
     marginTop: Spacing.xs,
   },
   listContent: {
-    padding: Spacing.lg,
+    padding: Spacing.xl,
     paddingTop: 0,
   },
   emptyContainer: {
@@ -104,18 +108,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.xl,
   },
+  emptyCard: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xxxl * 2,
+  },
   emptyIcon: {
-    fontSize: 64,
-    marginBottom: Spacing.md,
+    fontSize: 48,
+    marginBottom: Spacing.xl,
   },
   emptyText: {
-    fontSize: FontSize.lg,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: Spacing.sm,
+    fontSize: FontSize.bodyLg,
+    fontWeight: '700',
+    marginBottom: Spacing.md,
   },
   emptySubtext: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    fontSize: FontSize.body,
   },
 });

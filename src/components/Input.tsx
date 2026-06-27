@@ -1,6 +1,7 @@
-import React, { useRef, useState } from 'react';
-import { View, TextInput, Text, StyleSheet, Animated, ViewStyle } from 'react-native';
-import { Colors, FontSize, Spacing, BorderRadius } from '../constants';
+import React, { useState } from 'react';
+import { View, TextInput, Text, StyleSheet, ViewStyle } from 'react-native';
+import { Spacing, FontSize, BorderRadius } from '../constants';
+import { useTheme } from '../theme/ThemeContext';
 
 interface InputProps {
   label: string;
@@ -13,6 +14,7 @@ interface InputProps {
   multiline?: boolean;
   style?: ViewStyle;
   editable?: boolean;
+  leadingIcon?: React.ReactNode;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -26,56 +28,44 @@ export const Input: React.FC<InputProps> = ({
   multiline,
   style,
   editable = true,
+  leadingIcon,
 }) => {
   const [isFocused, setIsFocused] = useState(false);
-  const glowAnim = useRef(new Animated.Value(0)).current;
-
-  React.useEffect(() => {
-    if (isFocused) {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(glowAnim, {
-            toValue: 1,
-            duration: 1500,
-            useNativeDriver: false,
-          }),
-          Animated.timing(glowAnim, {
-            toValue: 0.5,
-            duration: 1500,
-            useNativeDriver: false,
-          }),
-        ])
-      ).start();
-    } else {
-      Animated.timing(glowAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: false,
-      }).start();
-    }
-  }, [isFocused]);
-
-  const borderColor = glowAnim.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [Colors.border, Colors.primary, Colors.border],
-  });
+  const { colors } = useTheme();
 
   return (
     <View style={[styles.container, style]}>
-      <Text style={styles.label}>{label}</Text>
-      <Animated.View style={[
-        styles.inputWrapper,
-        multiline && styles.multiline,
-        error ? styles.inputError : null,
-        !editable && styles.disabled,
-        { borderColor: error ? Colors.error : borderColor },
-      ]}>
+      <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
+      <View
+        style={[
+          styles.inputWrapper,
+          multiline && styles.multiline,
+          !editable && { opacity: 0.6 },
+          {
+            backgroundColor: colors.surface,
+            borderColor: error
+              ? colors.error
+              : isFocused
+              ? colors.primary
+              : colors.surfaceVariant,
+          },
+        ]}
+      >
+        {leadingIcon && (
+          <View style={styles.iconContainer}>{leadingIcon}</View>
+        )}
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              color: colors.text,
+              paddingLeft: leadingIcon ? Spacing.md : Spacing.xl,
+            },
+          ]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={Colors.textLight}
+          placeholderTextColor={colors.textMuted}
           secureTextEntry={secureTextEntry}
           keyboardType={keyboardType}
           multiline={multiline}
@@ -85,51 +75,47 @@ export const Input: React.FC<InputProps> = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
         />
-      </Animated.View>
-      {error && <Text style={styles.error}>{error}</Text>}
+      </View>
+      {error && <Text style={[styles.error, { color: colors.error }]}>{error}</Text>}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xl,
   },
   label: {
-    fontSize: FontSize.sm,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
+    fontSize: FontSize.caption,
+    fontWeight: '700',
+    marginBottom: Spacing.md,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   inputWrapper: {
-    backgroundColor: Colors.backgroundLight,
+    flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1,
-    borderRadius: BorderRadius.sm,
-    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.standard,
     minHeight: 48,
-    justifyContent: 'center',
+  },
+  iconContainer: {
+    position: 'absolute',
+    left: Spacing.xl,
+    zIndex: 1,
   },
   input: {
-    fontSize: FontSize.md,
-    color: Colors.text,
-    paddingVertical: Spacing.sm + 4,
+    flex: 1,
+    fontSize: FontSize.body,
+    paddingVertical: Spacing.md + 4,
+    paddingRight: Spacing.xl,
   },
   multiline: {
     minHeight: 100,
-    paddingTop: Spacing.sm + 4,
-  },
-  inputError: {
-    borderColor: Colors.error,
-  },
-  disabled: {
-    backgroundColor: Colors.surface,
-    opacity: 0.6,
+    paddingTop: Spacing.md + 4,
   },
   error: {
-    fontSize: FontSize.xs,
-    color: Colors.error,
+    fontSize: FontSize.caption,
     marginTop: Spacing.xs,
   },
 });

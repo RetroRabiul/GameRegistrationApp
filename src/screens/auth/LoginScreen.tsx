@@ -1,13 +1,14 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert, Animated } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Spacing, FontSize, BorderRadius } from '../../constants';
+import { Spacing, FontSize, BorderRadius } from '../../constants';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
-import { AnimatedBackground } from '../../components/AnimatedBackground';
-import { AnimatedCard } from '../../components/AnimatedCard';
+import { Card } from '../../components/Card';
+import { Logo } from '../../components/Logo';
 import { useAuthStore } from '../../store/authStore';
+import { useTheme } from '../../theme/ThemeContext';
 
 type AuthStackParamList = {
   Login: undefined;
@@ -22,24 +23,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { signIn, loading, error, clearError } = useAuthStore();
-  const glowAnim = useRef(new Animated.Value(0.5)).current;
-
-  React.useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowAnim, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(glowAnim, {
-          toValue: 0.5,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, []);
+  const { colors } = useTheme();
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -54,14 +38,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
     }
   };
 
-  const titleShadow = {
-    textShadowColor: Colors.primary,
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: glowAnim,
-  };
-
   return (
-    <AnimatedBackground>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -70,20 +48,21 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
-          <AnimatedCard delay={0} style={styles.header}>
-            <Text style={styles.logo}>🎮</Text>
-            <Animated.Text style={[styles.title, { opacity: glowAnim }]}>
-              GAME REGISTRATION
-            </Animated.Text>
-            <Text style={styles.subtitle}>Sign in to continue</Text>
-          </AnimatedCard>
+          <View style={styles.header}>
+            <Logo size={100} />
+            <Text style={[styles.title, { color: colors.text }]}>PlayRegister</Text>
+            <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+              Sign in to continue
+            </Text>
+          </View>
 
-          <AnimatedCard delay={200} style={styles.form}>
+          <Card variant="auth" style={styles.formCard}>
             <LinearGradient
-              colors={[Colors.surface, Colors.surfaceLight]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.formGradient}
+              colors={[
+                colors.primary + '0A',
+                colors.secondary + '0A',
+              ]}
+              style={styles.gradientOverlay}
             >
               <Input
                 label="Email"
@@ -108,19 +87,22 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
               />
 
               <View style={styles.footer}>
-                <Text style={styles.footerText}>Don't have an account? </Text>
+                <Text style={[styles.footerText, { color: colors.textMuted }]}>
+                  Don't have an account?{' '}
+                </Text>
                 <Button
                   title="Sign Up"
                   onPress={() => navigation.navigate('Signup')}
-                  variant="outline"
-                  style={styles.signupButton}
+                  variant="text"
+                  fullWidth={false}
+                  textStyle={styles.signupLink}
                 />
               </View>
             </LinearGradient>
-          </AnimatedCard>
+          </Card>
         </ScrollView>
       </KeyboardAvoidingView>
-    </AnimatedBackground>
+    </View>
   );
 };
 
@@ -131,41 +113,28 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: Spacing.lg,
+    padding: Spacing.xxl,
   },
   header: {
     alignItems: 'center',
-    marginBottom: Spacing.xl,
-  },
-  logo: {
-    fontSize: 64,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xxxl * 2,
   },
   title: {
-    fontSize: FontSize.title,
-    fontWeight: '800',
-    color: Colors.primary,
-    marginBottom: Spacing.sm,
+    fontSize: FontSize.display,
+    fontWeight: '900',
+    marginBottom: Spacing.md,
     textTransform: 'uppercase',
-    letterSpacing: 2,
+    letterSpacing: 1,
   },
   subtitle: {
-    fontSize: FontSize.md,
-    color: Colors.textSecondary,
+    fontSize: FontSize.bodyLg,
   },
-  form: {
-    borderRadius: BorderRadius.lg,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
-    elevation: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
+  formCard: {
+    overflow: 'hidden',
   },
-  formGradient: {
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
+  gradientOverlay: {
+    margin: -Spacing.hero,
+    padding: Spacing.hero,
   },
   loginButton: {
     marginTop: Spacing.md,
@@ -174,15 +143,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: Spacing.lg,
+    marginTop: Spacing.xxl,
   },
   footerText: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    fontSize: FontSize.body,
   },
-  signupButton: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    minHeight: 36,
+  signupLink: {
+    fontSize: FontSize.body,
+    textTransform: 'none',
+    letterSpacing: 0,
+    paddingVertical: 0,
+    minHeight: undefined,
   },
 });

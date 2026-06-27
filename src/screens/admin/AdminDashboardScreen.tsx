@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
-import { Colors, Spacing, FontSize, BorderRadius } from '../../constants';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Spacing, FontSize, BorderRadius } from '../../constants';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { Card } from '../../components/Card';
+import { MetricCard } from '../../components/MetricCard';
+import { PulsingDot } from '../../components/PulsingDot';
 import { useRegistrationStore } from '../../store/registrationStore';
+import { useTheme } from '../../theme/ThemeContext';
 import { DashboardStats } from '../../types';
 
 export const AdminDashboardScreen: React.FC = () => {
   const { getDashboardStats, loading } = useRegistrationStore();
+  const { colors } = useTheme();
   const [stats, setStats] = useState<DashboardStats>({
     totalEvents: 0,
     totalRegistrations: 0,
@@ -36,53 +42,84 @@ export const AdminDashboardScreen: React.FC = () => {
 
   return (
     <ScrollView
-      style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={colors.primary}
+        />
+      }
     >
-      <View style={styles.header}>
-        <Text style={styles.title}>Admin Dashboard</Text>
-        <Text style={styles.subtitle}>Overview of your events</Text>
+      <View style={styles.heroCard}>
+        <LinearGradient
+          colors={[colors.primary + '26', colors.secondary + '26']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.heroGradient}
+        >
+          <View style={styles.heroLiveRow}>
+            <PulsingDot color={colors.primary} size={8} />
+            <Text style={[styles.heroLiveText, { color: colors.primary }]}>
+              LIVE DASHBOARD
+            </Text>
+          </View>
+          <Text style={[styles.heroTitle, { color: colors.text }]}>
+            Command Center
+          </Text>
+          <Text style={[styles.heroSubtitle, { color: colors.textMuted }]}>
+            Monitor your events, registrations, and revenue in real time.
+          </Text>
+        </LinearGradient>
       </View>
 
       <View style={styles.statsGrid}>
-        <View style={styles.statCard}>
-          <Text style={styles.statIcon}>📅</Text>
-          <Text style={styles.statValue}>{stats.totalEvents}</Text>
-          <Text style={styles.statLabel}>Total Events</Text>
-        </View>
-
-        <View style={styles.statCard}>
-          <Text style={styles.statIcon}>🔜</Text>
-          <Text style={styles.statValue}>{stats.upcomingEvents}</Text>
-          <Text style={styles.statLabel}>Upcoming</Text>
-        </View>
-
-        <View style={styles.statCard}>
-          <Text style={styles.statIcon}>👥</Text>
-          <Text style={styles.statValue}>{stats.totalRegistrations}</Text>
-          <Text style={styles.statLabel}>Paid Registrations</Text>
-        </View>
-
-        <View style={[styles.statCard, styles.revenueCard]}>
-          <Text style={styles.statIcon}>💰</Text>
-          <Text style={[styles.statValue, styles.revenueValue]}>৳{stats.totalRevenue}</Text>
-          <Text style={styles.statLabel}>Total Revenue</Text>
-        </View>
+        <MetricCard
+          icon="◫"
+          value={stats.totalEvents}
+          label="Total Events"
+          accentColor={colors.primary}
+        />
+        <MetricCard
+          icon="◷"
+          value={stats.upcomingEvents}
+          label="Upcoming"
+          accentColor={colors.secondary}
+        />
+        <MetricCard
+          icon="⊕"
+          value={stats.totalRegistrations}
+          label="Paid Registrations"
+          accentColor={colors.tertiary}
+        />
+        <MetricCard
+          icon="◈"
+          value={`৳${stats.totalRevenue}`}
+          label="Total Revenue"
+          accentColor={colors.gold}
+        />
       </View>
 
-      <View style={styles.quickActions}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
+      <Card style={styles.actionsCard}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          Quick Actions
+        </Text>
         <View style={styles.actionsRow}>
-          <View style={styles.actionHint}>
-            <Text style={styles.actionIcon}>➕</Text>
-            <Text style={styles.actionText}>Create Event</Text>
+          <View style={[styles.actionItem, { borderColor: colors.surfaceVariant }]}>
+            <Text style={[styles.actionIcon, { color: colors.primary }]}>⊕</Text>
+            <Text style={[styles.actionText, { color: colors.text }]}>
+              Create Event
+            </Text>
           </View>
-          <View style={styles.actionHint}>
-            <Text style={styles.actionIcon}>📋</Text>
-            <Text style={styles.actionText}>View Registrations</Text>
+          <View style={[styles.actionItem, { borderColor: colors.surfaceVariant }]}>
+            <Text style={[styles.actionIcon, { color: colors.secondary }]}>⚔</Text>
+            <Text style={[styles.actionText, { color: colors.text }]}>
+              View Registrations
+            </Text>
           </View>
         </View>
-      </View>
+      </Card>
     </ScrollView>
   );
 };
@@ -90,95 +127,71 @@ export const AdminDashboardScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
-  header: {
-    padding: Spacing.lg,
-    paddingBottom: Spacing.md,
+  content: {
+    padding: Spacing.xl,
   },
-  title: {
-    fontSize: FontSize.xxl,
-    fontWeight: '800',
-    color: Colors.text,
+  heroCard: {
+    borderRadius: BorderRadius.hero,
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginBottom: Spacing.xl,
   },
-  subtitle: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
-    marginTop: Spacing.xs,
+  heroGradient: {
+    padding: Spacing.hero,
+  },
+  heroLiveRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  heroLiveText: {
+    fontSize: FontSize.label,
+    fontWeight: '700',
+    marginLeft: Spacing.md,
+    letterSpacing: 1,
+  },
+  heroTitle: {
+    fontSize: FontSize.hero,
+    fontWeight: '900',
+    marginBottom: Spacing.md,
+  },
+  heroSubtitle: {
+    fontSize: FontSize.body,
+    lineHeight: 22,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    padding: Spacing.md,
+    marginBottom: Spacing.xl,
   },
-  statCard: {
-    width: '47%',
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    margin: '1.5%',
-    alignItems: 'center',
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  revenueCard: {
-    backgroundColor: Colors.primary + '10',
-    borderWidth: 1,
-    borderColor: Colors.primary + '30',
-  },
-  statIcon: {
-    fontSize: 32,
-    marginBottom: Spacing.sm,
-  },
-  statValue: {
-    fontSize: FontSize.xxl,
-    fontWeight: '800',
-    color: Colors.text,
-    marginBottom: Spacing.xs,
-  },
-  revenueValue: {
-    color: Colors.primary,
-  },
-  statLabel: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
-  quickActions: {
-    padding: Spacing.lg,
+  actionsCard: {
+    marginBottom: Spacing.xl,
   },
   sectionTitle: {
-    fontSize: FontSize.lg,
-    fontWeight: '700',
-    color: Colors.text,
-    marginBottom: Spacing.md,
+    fontSize: FontSize.heading,
+    fontWeight: '900',
+    marginBottom: Spacing.xl,
   },
   actionsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    gap: Spacing.xl,
   },
-  actionHint: {
+  actionItem: {
+    flex: 1,
     alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    width: '45%',
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1,
+    borderRadius: BorderRadius.standard,
+    padding: Spacing.xxl,
   },
   actionIcon: {
-    fontSize: 32,
-    marginBottom: Spacing.sm,
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: Spacing.md,
   },
   actionText: {
-    fontSize: FontSize.sm,
-    fontWeight: '600',
-    color: Colors.text,
+    fontSize: FontSize.body,
+    fontWeight: '700',
+    textAlign: 'center',
   },
 });

@@ -1,25 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, Alert, RefreshControl } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Colors, Spacing, FontSize, BorderRadius } from '../../constants';
+import { Spacing, FontSize, BorderRadius } from '../../constants';
 import { Button } from '../../components/Button';
+import { Card } from '../../components/Card';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { useEventStore } from '../../store/eventStore';
+import { useTheme } from '../../theme/ThemeContext';
 import { GameEvent } from '../../types';
+import { MainStackParamList } from '../../navigation/MainNavigator';
 
-type AdminStackParamList = {
-  ManageEvents: undefined;
-  CreateEvent: undefined;
-  EditEvent: { event: GameEvent };
-  ViewRegistrations: { event: GameEvent };
-};
-
-interface ManageEventsScreenProps {
-  navigation: NativeStackNavigationProp<AdminStackParamList, 'ManageEvents'>;
-}
-
-export const ManageEventsScreen: React.FC<ManageEventsScreenProps> = ({ navigation }) => {
+export const ManageEventsScreen: React.FC = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const { events, loading, fetchEvents, deleteEvent } = useEventStore();
+  const { colors } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -59,84 +54,128 @@ export const ManageEventsScreen: React.FC<ManageEventsScreenProps> = ({ navigati
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'upcoming': return colors.primary;
+      case 'ongoing': return colors.tertiary;
+      case 'completed': return colors.textMuted;
+      case 'cancelled': return colors.error;
+      default: return colors.textMuted;
+    }
+  };
+
   if (loading && events.length === 0) {
     return <LoadingSpinner />;
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>Manage Events</Text>
-          <Text style={styles.subtitle}>{events.length} total events</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Manage Events</Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+            {events.length} total events
+          </Text>
         </View>
         <Button
           title="+ New"
           onPress={() => navigation.navigate('CreateEvent')}
+          fullWidth={false}
           style={styles.createButton}
         />
       </View>
 
       {events.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>📅</Text>
-          <Text style={styles.emptyText}>No events created yet</Text>
-          <Button
-            title="Create Your First Event"
-            onPress={() => navigation.navigate('CreateEvent')}
-            style={styles.emptyButton}
-          />
+          <Card style={styles.emptyCard}>
+            <Text style={[styles.emptyIcon, { color: colors.textMuted }]}>◫</Text>
+            <Text style={[styles.emptyText, { color: colors.text }]}>
+              No events created yet
+            </Text>
+            <Button
+              title="Create Your First Event"
+              onPress={() => navigation.navigate('CreateEvent')}
+              style={styles.emptyButton}
+            />
+          </Card>
         </View>
       ) : (
         <FlatList
           data={events}
           renderItem={({ item }) => (
-            <View style={styles.card}>
+            <Card style={styles.card}>
               <View style={styles.cardHeader}>
-                <Text style={styles.eventTitle} numberOfLines={1}>{item.title}</Text>
-                <View style={[
-                  styles.statusBadge,
-                  item.status === 'upcoming' && styles.statusUpcoming,
-                  item.status === 'completed' && styles.statusCompleted,
-                  item.status === 'cancelled' && styles.statusCancelled,
-                ]}>
-                  <Text style={styles.statusText}>{item.status}</Text>
+                <Text
+                  style={[styles.eventTitle, { color: colors.text }]}
+                  numberOfLines={1}
+                >
+                  {item.title}
+                </Text>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    {
+                      borderColor: getStatusColor(item.status),
+                      backgroundColor: getStatusColor(item.status) + '15',
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statusText,
+                      { color: getStatusColor(item.status) },
+                    ]}
+                  >
+                    {item.status}
+                  </Text>
                 </View>
               </View>
 
               <View style={styles.details}>
-                <Text style={styles.detailText}>📅 {formatDate(item.date)} | 🕐 {item.time?.substring(0, 5)}</Text>
-                <Text style={styles.detailText}>📍 {item.location}</Text>
-                <Text style={styles.detailText}>
-                  👥 {item.filled_slots}/{item.max_slots} | 💰 ৳{item.price}
+                <Text style={[styles.detailText, { color: colors.textMuted }]}>
+                  {formatDate(item.date)} | {item.time?.substring(0, 5)}
+                </Text>
+                <Text style={[styles.detailText, { color: colors.textMuted }]}>
+                  {item.location}
+                </Text>
+                <Text style={[styles.detailText, { color: colors.textMuted }]}>
+                  {item.filled_slots}/{item.max_slots} slots | ৳{item.price}
                 </Text>
               </View>
 
-              <View style={styles.actions}>
+              <View style={[styles.actions, { borderTopColor: colors.surfaceVariant }]}>
                 <Button
                   title="Registrations"
                   onPress={() => navigation.navigate('ViewRegistrations', { event: item })}
                   variant="outline"
+                  fullWidth={false}
                   style={styles.actionButton}
                 />
                 <Button
                   title="Edit"
                   onPress={() => navigation.navigate('EditEvent', { event: item })}
+                  variant="secondary"
+                  fullWidth={false}
                   style={styles.actionButton}
                 />
                 <Button
                   title="Delete"
                   onPress={() => handleDelete(item.id, item.title)}
                   variant="danger"
+                  fullWidth={false}
                   style={styles.actionButton}
                 />
               </View>
-            </View>
+            </Card>
           )}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+            />
           }
         />
       )}
@@ -147,91 +186,74 @@ export const ManageEventsScreen: React.FC<ManageEventsScreenProps> = ({ navigati
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: Spacing.lg,
+    padding: Spacing.xl,
     paddingBottom: Spacing.md,
   },
   title: {
-    fontSize: FontSize.xxl,
-    fontWeight: '800',
-    color: Colors.text,
+    fontSize: FontSize.hero,
+    fontWeight: '900',
   },
   subtitle: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    fontSize: FontSize.body,
     marginTop: Spacing.xs,
   },
   createButton: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
     minHeight: 40,
   },
   listContent: {
-    padding: Spacing.lg,
+    padding: Spacing.xl,
     paddingTop: 0,
   },
   card: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    marginBottom: Spacing.xl,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   eventTitle: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.cardTitle,
     fontWeight: '700',
-    color: Colors.text,
     flex: 1,
-    marginRight: Spacing.sm,
+    marginRight: Spacing.md,
   },
   statusBadge: {
-    paddingHorizontal: Spacing.sm,
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.metric,
+    borderWidth: 1,
   },
-  statusUpcoming: { backgroundColor: Colors.info + '20' },
-  statusCompleted: { backgroundColor: Colors.success + '20' },
-  statusCancelled: { backgroundColor: Colors.error + '20' },
   statusText: {
-    fontSize: FontSize.xs,
-    fontWeight: '600',
+    fontSize: FontSize.label,
+    fontWeight: '700',
     textTransform: 'capitalize',
-    color: Colors.text,
   },
   details: {
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   detailText: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    fontSize: FontSize.body,
     marginBottom: Spacing.xs,
   },
   actions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    paddingTop: Spacing.sm,
-    gap: Spacing.sm,
+    paddingTop: Spacing.md,
+    gap: Spacing.md,
   },
   actionButton: {
     flex: 1,
-    paddingVertical: Spacing.sm,
+    paddingVertical: Spacing.md,
     minHeight: 38,
   },
   emptyContainer: {
@@ -240,15 +262,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.xl,
   },
+  emptyCard: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xxxl * 2,
+  },
   emptyIcon: {
-    fontSize: 64,
-    marginBottom: Spacing.md,
+    fontSize: 48,
+    marginBottom: Spacing.xl,
   },
   emptyText: {
-    fontSize: FontSize.lg,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: Spacing.lg,
+    fontSize: FontSize.bodyLg,
+    fontWeight: '700',
+    marginBottom: Spacing.xl,
   },
   emptyButton: {
     minWidth: 200,

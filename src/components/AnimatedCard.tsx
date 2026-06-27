@@ -9,19 +9,19 @@ interface AnimatedCardProps {
 
 export const AnimatedCard: React.FC<AnimatedCardProps> = ({ children, style, delay = 0 }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 500,
+        duration: 400,
         delay,
         useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
         toValue: 0,
-        duration: 500,
+        duration: 400,
         delay,
         useNativeDriver: true,
       }),

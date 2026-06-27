@@ -1,24 +1,21 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Colors, Spacing, FontSize, BorderRadius } from '../../constants';
+import { Spacing, FontSize, BorderRadius } from '../../constants';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
+import { Card } from '../../components/Card';
 import { useEventStore } from '../../store/eventStore';
-
-type AdminStackParamList = {
-  ManageEvents: undefined;
-  CreateEvent: undefined;
-  EditEvent: undefined;
-  ViewRegistrations: undefined;
-};
+import { useTheme } from '../../theme/ThemeContext';
+import { MainStackParamList } from '../../navigation/MainNavigator';
 
 interface CreateEventScreenProps {
-  navigation: NativeStackNavigationProp<AdminStackParamList, 'CreateEvent'>;
+  navigation: NativeStackNavigationProp<MainStackParamList, 'CreateEvent'>;
 }
 
 export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation }) => {
   const { createEvent, loading } = useEventStore();
+  const { colors } = useTheme();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState('');
@@ -80,13 +77,18 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
   };
 
   return (
-    <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.header}>
-        <Text style={styles.title}>Create New Event</Text>
-        <Text style={styles.subtitle}>Fill in the event details</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Create New Event</Text>
+        <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+          Fill in the event details
+        </Text>
       </View>
 
-      <View style={styles.form}>
+      <Card style={styles.form}>
         <Input
           label="Event Title *"
           value={title}
@@ -139,7 +141,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
           loading={loading}
           style={styles.createButton}
         />
-      </View>
+      </Card>
     </ScrollView>
   );
 };
@@ -147,33 +149,22 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   header: {
-    padding: Spacing.lg,
+    padding: Spacing.xl,
     paddingBottom: Spacing.md,
   },
   title: {
-    fontSize: FontSize.xxl,
-    fontWeight: '800',
-    color: Colors.text,
+    fontSize: FontSize.hero,
+    fontWeight: '900',
   },
   subtitle: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    fontSize: FontSize.body,
     marginTop: Spacing.xs,
   },
   form: {
-    backgroundColor: Colors.surface,
-    margin: Spacing.lg,
+    margin: Spacing.xl,
     marginTop: 0,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
   },
   createButton: {
     marginTop: Spacing.md,

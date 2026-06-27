@@ -2,27 +2,24 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Alert } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { Colors, Spacing, FontSize, BorderRadius } from '../../constants';
+import { Spacing, FontSize, BorderRadius } from '../../constants';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
+import { Card } from '../../components/Card';
 import { useEventStore } from '../../store/eventStore';
+import { useTheme } from '../../theme/ThemeContext';
 import { GameEvent } from '../../types';
-
-type AdminStackParamList = {
-  ManageEvents: undefined;
-  CreateEvent: undefined;
-  EditEvent: { event: GameEvent };
-  ViewRegistrations: undefined;
-};
+import { MainStackParamList } from '../../navigation/MainNavigator';
 
 interface EditEventScreenProps {
-  navigation: NativeStackNavigationProp<AdminStackParamList, 'EditEvent'>;
-  route: RouteProp<AdminStackParamList, 'EditEvent'>;
+  navigation: NativeStackNavigationProp<MainStackParamList, 'EditEvent'>;
+  route: RouteProp<MainStackParamList, 'EditEvent'>;
 }
 
 export const EditEventScreen: React.FC<EditEventScreenProps> = ({ navigation, route }) => {
   const { event } = route.params;
   const { updateEvent, loading } = useEventStore();
+  const { colors } = useTheme();
 
   const [title, setTitle] = useState(event.title);
   const [description, setDescription] = useState(event.description || '');
@@ -60,13 +57,18 @@ export const EditEventScreen: React.FC<EditEventScreenProps> = ({ navigation, ro
   };
 
   return (
-    <ScrollView style={styles.container} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      keyboardShouldPersistTaps="handled"
+    >
       <View style={styles.header}>
-        <Text style={styles.title}>Edit Event</Text>
-        <Text style={styles.subtitle}>Update event details</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Edit Event</Text>
+        <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+          Update event details
+        </Text>
       </View>
 
-      <View style={styles.form}>
+      <Card style={styles.form}>
         <Input label="Event Title *" value={title} onChangeText={setTitle} />
         <Input label="Description" value={description} onChangeText={setDescription} multiline />
         <Input label="Date *" value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" />
@@ -76,7 +78,7 @@ export const EditEventScreen: React.FC<EditEventScreenProps> = ({ navigation, ro
         <Input label="Max Slots *" value={maxSlots} onChangeText={setMaxSlots} keyboardType="numeric" />
 
         <View style={styles.statusSection}>
-          <Text style={styles.statusLabel}>Event Status</Text>
+          <Text style={[styles.statusLabel, { color: colors.text }]}>Event Status</Text>
           <View style={styles.statusOptions}>
             {(['upcoming', 'ongoing', 'completed', 'cancelled'] as const).map((s) => (
               <Button
@@ -84,6 +86,7 @@ export const EditEventScreen: React.FC<EditEventScreenProps> = ({ navigation, ro
                 title={s}
                 onPress={() => setStatus(s)}
                 variant={status === s ? 'primary' : 'outline'}
+                fullWidth={false}
                 style={styles.statusButton}
               />
             ))}
@@ -96,7 +99,7 @@ export const EditEventScreen: React.FC<EditEventScreenProps> = ({ navigation, ro
           loading={loading}
           style={styles.saveButton}
         />
-      </View>
+      </Card>
     </ScrollView>
   );
 };
@@ -104,51 +107,39 @@ export const EditEventScreen: React.FC<EditEventScreenProps> = ({ navigation, ro
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   header: {
-    padding: Spacing.lg,
+    padding: Spacing.xl,
     paddingBottom: Spacing.md,
   },
   title: {
-    fontSize: FontSize.xxl,
-    fontWeight: '800',
-    color: Colors.text,
+    fontSize: FontSize.hero,
+    fontWeight: '900',
   },
   subtitle: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    fontSize: FontSize.body,
     marginTop: Spacing.xs,
   },
   form: {
-    backgroundColor: Colors.surface,
-    margin: Spacing.lg,
+    margin: Spacing.xl,
     marginTop: 0,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
   },
   statusSection: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.xl,
   },
   statusLabel: {
-    fontSize: FontSize.sm,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: Spacing.sm,
+    fontSize: FontSize.body,
+    fontWeight: '700',
+    marginBottom: Spacing.md,
   },
   statusOptions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
   statusButton: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
     minHeight: 38,
   },
   saveButton: {

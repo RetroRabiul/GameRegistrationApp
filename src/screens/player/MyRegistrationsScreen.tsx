@@ -1,25 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, Alert, RefreshControl } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Colors, Spacing, FontSize, BorderRadius } from '../../constants';
+import { Spacing, FontSize, BorderRadius } from '../../constants';
 import { Button } from '../../components/Button';
+import { Card } from '../../components/Card';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { useRegistrationStore } from '../../store/registrationStore';
+import { useTheme } from '../../theme/ThemeContext';
 import { Registration } from '../../types';
+import { MainStackParamList } from '../../navigation/MainNavigator';
 
-type PlayerStackParamList = {
-  EventList: undefined;
-  EventDetail: undefined;
-  MyRegistrations: undefined;
-  Payment: { eventId: string; registrationId: string; amount: number; eventTitle: string };
-};
-
-interface MyRegistrationsScreenProps {
-  navigation: NativeStackNavigationProp<PlayerStackParamList, 'MyRegistrations'>;
-}
-
-export const MyRegistrationsScreen: React.FC<MyRegistrationsScreenProps> = ({ navigation }) => {
+export const MyRegistrationsScreen: React.FC = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const { registrations, loading, fetchMyRegistrations, cancelRegistration } = useRegistrationStore();
+  const { colors } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -65,19 +60,19 @@ export const MyRegistrationsScreen: React.FC<MyRegistrationsScreenProps> = ({ na
 
   const getPaymentStatusColor = (status: string) => {
     switch (status) {
-      case 'paid': return Colors.success;
-      case 'pending': return Colors.warning;
-      case 'failed': return Colors.error;
-      default: return Colors.textLight;
+      case 'paid': return colors.tertiary;
+      case 'pending': return colors.gold;
+      case 'failed': return colors.error;
+      default: return colors.textMuted;
     }
   };
 
   const getRegistrationStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmed': return Colors.success;
-      case 'pending': return Colors.warning;
-      case 'cancelled': return Colors.error;
-      default: return Colors.textLight;
+      case 'confirmed': return colors.tertiary;
+      case 'pending': return colors.gold;
+      case 'cancelled': return colors.error;
+      default: return colors.textMuted;
     }
   };
 
@@ -86,17 +81,25 @@ export const MyRegistrationsScreen: React.FC<MyRegistrationsScreenProps> = ({ na
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>My Registrations</Text>
-        <Text style={styles.subtitle}>{registrations.length} registrations</Text>
+        <Text style={[styles.title, { color: colors.text }]}>My Registrations</Text>
+        <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+          {registrations.length} registrations
+        </Text>
       </View>
 
       {registrations.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>📋</Text>
-          <Text style={styles.emptyText}>No registrations yet</Text>
-          <Text style={styles.emptySubtext}>Register for an event to see it here</Text>
+          <Card style={styles.emptyCard}>
+            <Text style={[styles.emptyIcon, { color: colors.textMuted }]}>⊕</Text>
+            <Text style={[styles.emptyText, { color: colors.text }]}>
+              No registrations yet
+            </Text>
+            <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
+              Register for an event to see it here
+            </Text>
+          </Card>
         </View>
       ) : (
         <FlatList
@@ -104,14 +107,29 @@ export const MyRegistrationsScreen: React.FC<MyRegistrationsScreenProps> = ({ na
           renderItem={({ item }) => {
             const event = item.event;
             return (
-              <View style={styles.card}>
+              <Card style={styles.card}>
                 <View style={styles.cardHeader}>
-                  <Text style={styles.eventTitle} numberOfLines={1}>{event?.title || 'Unknown Event'}</Text>
-                  <View style={[
-                    styles.regStatusBadge,
-                    { backgroundColor: getRegistrationStatusColor(item.status) + '20' },
-                  ]}>
-                    <Text style={[styles.regStatusText, { color: getRegistrationStatusColor(item.status) }]}>
+                  <Text
+                    style={[styles.eventTitle, { color: colors.text }]}
+                    numberOfLines={1}
+                  >
+                    {event?.title || 'Unknown Event'}
+                  </Text>
+                  <View
+                    style={[
+                      styles.regStatusBadge,
+                      {
+                        backgroundColor: getRegistrationStatusColor(item.status) + '15',
+                        borderColor: getRegistrationStatusColor(item.status),
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.regStatusText,
+                        { color: getRegistrationStatusColor(item.status) },
+                      ]}
+                    >
                       {item.status}
                     </Text>
                   </View>
@@ -120,28 +138,41 @@ export const MyRegistrationsScreen: React.FC<MyRegistrationsScreenProps> = ({ na
                 {event && (
                   <>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailIcon}>📅</Text>
-                      <Text style={styles.detailText}>{formatDate(event.date)} at {event.time?.substring(0, 5)}</Text>
+                      <Text style={[styles.detailText, { color: colors.textMuted }]}>
+                        {formatDate(event.date)} at {event.time?.substring(0, 5)}
+                      </Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailIcon}>📍</Text>
-                      <Text style={styles.detailText}>{event.location}</Text>
+                      <Text style={[styles.detailText, { color: colors.textMuted }]}>
+                        {event.location}
+                      </Text>
                     </View>
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailIcon}>💰</Text>
-                      <Text style={styles.detailText}>৳{event.price}</Text>
+                      <Text style={[styles.detailText, { color: colors.primary, fontWeight: '700' }]}>
+                        ৳{event.price}
+                      </Text>
                     </View>
                   </>
                 )}
 
-                <View style={styles.paymentRow}>
+                <View style={[styles.paymentRow, { borderTopColor: colors.surfaceVariant }]}>
                   <View style={styles.paymentStatusContainer}>
-                    <Text style={styles.paymentLabel}>Payment:</Text>
-                    <View style={[
-                      styles.paymentBadge,
-                      { backgroundColor: getPaymentStatusColor(item.payment_status) + '20' },
-                    ]}>
-                      <Text style={[styles.paymentStatusText, { color: getPaymentStatusColor(item.payment_status) }]}>
+                    <Text style={[styles.paymentLabel, { color: colors.textMuted }]}>Payment:</Text>
+                    <View
+                      style={[
+                        styles.paymentBadge,
+                        {
+                          backgroundColor: getPaymentStatusColor(item.payment_status) + '15',
+                          borderColor: getPaymentStatusColor(item.payment_status),
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.paymentStatusText,
+                          { color: getPaymentStatusColor(item.payment_status) },
+                        ]}
+                      >
                         {item.payment_status}
                       </Text>
                     </View>
@@ -157,6 +188,7 @@ export const MyRegistrationsScreen: React.FC<MyRegistrationsScreenProps> = ({ na
                           amount: event.price,
                           eventTitle: event.title,
                         })}
+                        fullWidth={false}
                         style={styles.payButton}
                       />
                     )}
@@ -165,18 +197,23 @@ export const MyRegistrationsScreen: React.FC<MyRegistrationsScreenProps> = ({ na
                         title="Cancel"
                         onPress={() => handleCancel(item.id, event?.title || '')}
                         variant="danger"
+                        fullWidth={false}
                         style={styles.cancelButton}
                       />
                     )}
                   </View>
                 </View>
-              </View>
+              </Card>
             );
           }}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+            />
           }
         />
       )}
@@ -187,113 +224,94 @@ export const MyRegistrationsScreen: React.FC<MyRegistrationsScreenProps> = ({ na
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   header: {
-    padding: Spacing.lg,
+    padding: Spacing.xl,
     paddingBottom: Spacing.md,
   },
   title: {
-    fontSize: FontSize.xxl,
-    fontWeight: '800',
-    color: Colors.text,
+    fontSize: FontSize.hero,
+    fontWeight: '900',
   },
   subtitle: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    fontSize: FontSize.body,
     marginTop: Spacing.xs,
   },
   listContent: {
-    padding: Spacing.lg,
+    padding: Spacing.xl,
     paddingTop: 0,
   },
   card: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.md,
-    marginBottom: Spacing.md,
-    shadowColor: Colors.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    marginBottom: Spacing.xl,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   eventTitle: {
-    fontSize: FontSize.lg,
+    fontSize: FontSize.cardTitle,
     fontWeight: '700',
-    color: Colors.text,
     flex: 1,
-    marginRight: Spacing.sm,
+    marginRight: Spacing.md,
   },
   regStatusBadge: {
-    paddingHorizontal: Spacing.sm,
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.metric,
+    borderWidth: 1,
   },
   regStatusText: {
-    fontSize: FontSize.xs,
-    fontWeight: '600',
+    fontSize: FontSize.label,
+    fontWeight: '700',
     textTransform: 'capitalize',
   },
   detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: Spacing.xs,
   },
-  detailIcon: {
-    fontSize: FontSize.sm,
-    marginRight: Spacing.sm,
-  },
   detailText: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    fontSize: FontSize.body,
   },
   paymentRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    paddingTop: Spacing.sm,
-    marginTop: Spacing.sm,
+    paddingTop: Spacing.md,
+    marginTop: Spacing.md,
   },
   paymentStatusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   paymentLabel: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
-    marginRight: Spacing.sm,
+    fontSize: FontSize.body,
+    marginRight: Spacing.md,
   },
   paymentBadge: {
-    paddingHorizontal: Spacing.sm,
+    paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.sm,
+    borderRadius: BorderRadius.metric,
+    borderWidth: 1,
   },
   paymentStatusText: {
-    fontSize: FontSize.xs,
-    fontWeight: '600',
+    fontSize: FontSize.label,
+    fontWeight: '700',
     textTransform: 'capitalize',
   },
   actionButtons: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    gap: Spacing.md,
   },
   payButton: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
     minHeight: 36,
   },
   cancelButton: {
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
     minHeight: 36,
   },
   emptyContainer: {
@@ -302,18 +320,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Spacing.xl,
   },
+  emptyCard: {
+    alignItems: 'center',
+    paddingVertical: Spacing.xxxl * 2,
+  },
   emptyIcon: {
-    fontSize: 64,
-    marginBottom: Spacing.md,
+    fontSize: 48,
+    marginBottom: Spacing.xl,
   },
   emptyText: {
-    fontSize: FontSize.lg,
-    fontWeight: '600',
-    color: Colors.text,
-    marginBottom: Spacing.sm,
+    fontSize: FontSize.bodyLg,
+    fontWeight: '700',
+    marginBottom: Spacing.md,
   },
   emptySubtext: {
-    fontSize: FontSize.sm,
-    color: Colors.textSecondary,
+    fontSize: FontSize.body,
   },
 });
