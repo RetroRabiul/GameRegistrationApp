@@ -1,5 +1,5 @@
-import React from 'react';
-import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
+import React, { useRef } from 'react';
+import { Animated, TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import { Colors, FontSize, Spacing, BorderRadius } from '../constants';
 import { GameEvent } from '../types';
 
@@ -9,6 +9,7 @@ interface EventCardProps {
 }
 
 export const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
   const slotsLeft = event.max_slots - event.filled_slots;
   const isFull = slotsLeft <= 0;
 
@@ -21,43 +22,69 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
     });
   };
 
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.97,
+      useNativeDriver: true,
+      friction: 8,
+      tension: 40,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 3,
+      tension: 40,
+    }).start();
+  };
+
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
-      <View style={styles.header}>
-        <Text style={styles.title} numberOfLines={1}>{event.title}</Text>
-        <View style={[
-          styles.statusBadge,
-          event.status === 'upcoming' && styles.statusUpcoming,
-          event.status === 'ongoing' && styles.statusOngoing,
-          event.status === 'completed' && styles.statusCompleted,
-          event.status === 'cancelled' && styles.statusCancelled,
-        ]}>
-          <Text style={styles.statusText}>{event.status}</Text>
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        style={styles.card}
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={0.7}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title} numberOfLines={1}>{event.title}</Text>
+          <View style={[
+            styles.statusBadge,
+            event.status === 'upcoming' && styles.statusUpcoming,
+            event.status === 'ongoing' && styles.statusOngoing,
+            event.status === 'completed' && styles.statusCompleted,
+            event.status === 'cancelled' && styles.statusCancelled,
+          ]}>
+            <Text style={styles.statusText}>{event.status}</Text>
+          </View>
         </View>
-      </View>
 
-      <Text style={styles.description} numberOfLines={2}>{event.description}</Text>
+        <Text style={styles.description} numberOfLines={2}>{event.description}</Text>
 
-      <View style={styles.details}>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailIcon}>📅</Text>
-          <Text style={styles.detailText}>{formatDate(event.date)}</Text>
-          <Text style={styles.detailIcon}>🕐</Text>
-          <Text style={styles.detailText}>{event.time?.substring(0, 5)}</Text>
+        <View style={styles.details}>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailIcon}>📅</Text>
+            <Text style={styles.detailText}>{formatDate(event.date)}</Text>
+            <Text style={styles.detailIcon}>🕐</Text>
+            <Text style={styles.detailText}>{event.time?.substring(0, 5)}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.detailIcon}>📍</Text>
+            <Text style={styles.detailText} numberOfLines={1}>{event.location}</Text>
+          </View>
         </View>
-        <View style={styles.detailRow}>
-          <Text style={styles.detailIcon}>📍</Text>
-          <Text style={styles.detailText} numberOfLines={1}>{event.location}</Text>
-        </View>
-      </View>
 
-      <View style={styles.footer}>
-        <Text style={styles.price}>৳{event.price}</Text>
-        <Text style={[styles.slots, isFull && styles.slotsFull]}>
-          {isFull ? 'Full' : `${slotsLeft} slots left`}
-        </Text>
-      </View>
-    </TouchableOpacity>
+        <View style={styles.footer}>
+          <Text style={styles.price}>৳{event.price}</Text>
+          <Text style={[styles.slots, isFull && styles.slotsFull]}>
+            {isFull ? 'Full' : `${slotsLeft} slots left`}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 

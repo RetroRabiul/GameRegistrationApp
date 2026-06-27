@@ -3,6 +3,8 @@ import { View, Text, FlatList, StyleSheet, RefreshControl, Alert } from 'react-n
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors, Spacing, FontSize } from '../../constants';
 import { EventCard } from '../../components/EventCard';
+import { AnimatedCard } from '../../components/AnimatedCard';
+import { AnimatedBackground } from '../../components/AnimatedBackground';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { useEventStore } from '../../store/eventStore';
 import { GameEvent } from '../../types';
@@ -40,32 +42,36 @@ export const EventListScreen: React.FC<EventListScreenProps> = ({ navigation }) 
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Upcoming Events</Text>
-        <Text style={styles.subtitle}>{events.length} events available</Text>
-      </View>
-
-      {events.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>🎮</Text>
-          <Text style={styles.emptyText}>No events available yet</Text>
-          <Text style={styles.emptySubtext}>Check back later!</Text>
+    <AnimatedBackground>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Upcoming Events</Text>
+          <Text style={styles.subtitle}>{events.length} events available</Text>
         </View>
-      ) : (
-        <FlatList
-          data={events.filter(e => e.status === 'upcoming')}
-          renderItem={({ item }) => (
-            <EventCard event={item} onPress={() => handleEventPress(item)} />
-          )}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
-          }
-        />
-      )}
-    </View>
+
+        {events.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>🎮</Text>
+            <Text style={styles.emptyText}>No events available yet</Text>
+            <Text style={styles.emptySubtext}>Check back later!</Text>
+          </View>
+        ) : (
+          <FlatList
+            data={events.filter(e => e.status === 'upcoming')}
+            renderItem={({ item, index }) => (
+              <AnimatedCard delay={index * 100}>
+                <EventCard event={item} onPress={() => handleEventPress(item)} />
+              </AnimatedCard>
+            )}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContent}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+            }
+          />
+        )}
+      </View>
+    </AnimatedBackground>
   );
 };
 

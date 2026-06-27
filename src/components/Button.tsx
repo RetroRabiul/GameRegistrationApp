@@ -1,5 +1,5 @@
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
+import React, { useRef } from 'react';
+import { Animated, TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, Easing } from 'react-native';
 import { Colors, FontSize, Spacing, BorderRadius } from '../constants';
 
 interface ButtonProps {
@@ -19,31 +19,54 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   style,
 }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
   const isOutline = variant === 'outline';
 
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+      friction: 8,
+      tension: 40,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 3,
+      tension: 40,
+    }).start();
+  };
+
   return (
-    <TouchableOpacity
-      style={[
-        styles.button,
-        variant === 'primary' && styles.primary,
-        variant === 'secondary' && styles.secondary,
-        variant === 'outline' && styles.outline,
-        variant === 'danger' && styles.danger,
-        disabled && styles.disabled,
-        style,
-      ]}
-      onPress={onPress}
-      disabled={disabled || loading}
-      activeOpacity={0.7}
-    >
-      {loading ? (
-        <ActivityIndicator color={isOutline ? Colors.primary : Colors.white} />
-      ) : (
-        <Text style={[styles.text, isOutline && styles.outlineText]}>
-          {title}
-        </Text>
-      )}
-    </TouchableOpacity>
+    <Animated.View style={[{ transform: [{ scale: scaleAnim }] }]}>
+      <TouchableOpacity
+        style={[
+          styles.button,
+          variant === 'primary' && styles.primary,
+          variant === 'secondary' && styles.secondary,
+          variant === 'outline' && styles.outline,
+          variant === 'danger' && styles.danger,
+          disabled && styles.disabled,
+          style,
+        ]}
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        disabled={disabled || loading}
+        activeOpacity={0.7}
+      >
+        {loading ? (
+          <ActivityIndicator color={isOutline ? Colors.primary : Colors.white} />
+        ) : (
+          <Text style={[styles.text, isOutline && styles.outlineText]}>
+            {title}
+          </Text>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 

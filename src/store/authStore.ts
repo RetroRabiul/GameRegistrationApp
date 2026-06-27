@@ -21,13 +21,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   initialize: async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await get().fetchProfile(session.user.id);
-      } else {
-        set({ user: null, loading: false });
-      }
-
       supabase.auth.onAuthStateChange(async (_event, session) => {
         if (session?.user) {
           await get().fetchProfile(session.user.id);
@@ -35,6 +28,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           set({ user: null, loading: false });
         }
       });
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        await get().fetchProfile(session.user.id);
+      } else {
+        set({ user: null, loading: false });
+      }
     } catch (error: any) {
       set({ error: error.message, loading: false });
     }
@@ -48,10 +48,46 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Profile fetch error:', error);
+        
+        if (error.code === 'PGRST116') {
+          console.log('Profile not found, creating...');
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert({
+                id: userId,
+                email: user.email || '',
+                full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+                role: 'player',
+              })
+              .select()
+              .single();
+            
+            if (createError) {
+              console.error('Profile creation error:', createError);
+              throw createError;
+            }
+            
+            set({ user: newProfile as Profile, loading: false });
+            return;
+          }
+        }
+        
+        throw error;
+      }
+      
+      if (!data) {
+        set({ user: null, loading: false, error: 'Profile not found' });
+        return;
+      }
+      
       set({ user: data as Profile, loading: false });
     } catch (error: any) {
-      set({ error: error.message, loading: false });
+      console.error('fetchProfile error:', error);
+      set({ user: null, loading: false, error: error.message });
     }
   },
 
@@ -89,15 +125,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signIn: async (email: string, password: string) => {
     try {
       set({ loading: true, error: null });
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Sign in error:', error);
+        throw error;
+      }
+      
+      console.log('Sign in successful, user:', data.user?.id);
+      
+      if (data.user) {
+        await get().fetchProfile(data.user.id);
+      }
+      
       set({ loading: false });
       return true;
     } catch (error: any) {
+      console.error('signIn error:', error);
       set({ error: error.message, loading: false });
       return false;
     }

@@ -4,6 +4,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../constants';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
+import { AnimatedBackground } from '../../components/AnimatedBackground';
+import { AnimatedCard } from '../../components/AnimatedCard';
 import { useAuthStore } from '../../store/authStore';
 
 type AuthStackParamList = {
@@ -53,75 +55,77 @@ export const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+    <AnimatedBackground>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={styles.header}>
-          <Text style={styles.logo}>🎮</Text>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Join us for amazing game events</Text>
-        </View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <AnimatedCard delay={0} style={styles.header}>
+            <Text style={styles.logo}>🎮</Text>
+            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.subtitle}>Join us for amazing game events</Text>
+          </AnimatedCard>
 
-        <View style={styles.form}>
-          <Input
-            label="Full Name *"
-            value={fullName}
-            onChangeText={setFullName}
-            placeholder="Enter your full name"
-          />
-          <Input
-            label="Email *"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Enter your email"
-            keyboardType="email-address"
-          />
-          <Input
-            label="Phone"
-            value={phone}
-            onChangeText={setPhone}
-            placeholder="Enter your phone number"
-            keyboardType="phone-pad"
-          />
-          <Input
-            label="Password *"
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Create a password (min 6 chars)"
-            secureTextEntry
-          />
-          <Input
-            label="Confirm Password *"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            placeholder="Confirm your password"
-            secureTextEntry
-          />
-
-          <Button
-            title="Sign Up"
-            onPress={handleSignup}
-            loading={loading}
-            style={styles.signupButton}
-          />
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Already have an account? </Text>
-            <Button
-              title="Sign In"
-              onPress={() => navigation.navigate('Login')}
-              variant="outline"
-              style={styles.loginButton}
+          <AnimatedCard delay={200} style={styles.form}>
+            <Input
+              label="Full Name *"
+              value={fullName}
+              onChangeText={setFullName}
+              placeholder="Enter your full name"
             />
-          </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            <Input
+              label="Email *"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Enter your email"
+              keyboardType="email-address"
+            />
+            <Input
+              label="Phone"
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="Enter your phone number"
+              keyboardType="phone-pad"
+            />
+            <Input
+              label="Password *"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Create a password (min 6 chars)"
+              secureTextEntry
+            />
+            <Input
+              label="Confirm Password *"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="Confirm your password"
+              secureTextEntry
+            />
+
+            <Button
+              title="Sign Up"
+              onPress={handleSignup}
+              loading={loading}
+              style={styles.signupButton}
+            />
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Already have an account? </Text>
+              <Button
+                title="Sign In"
+                onPress={() => navigation.navigate('Login')}
+                variant="outline"
+                style={styles.loginButton}
+              />
+            </View>
+          </AnimatedCard>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </AnimatedBackground>
   );
 };
 

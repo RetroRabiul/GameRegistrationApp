@@ -4,6 +4,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../constants';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
+import { AnimatedBackground } from '../../components/AnimatedBackground';
+import { AnimatedCard } from '../../components/AnimatedCard';
 import { useAuthStore } from '../../store/authStore';
 
 type AuthStackParamList = {
@@ -34,55 +36,57 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
+    <AnimatedBackground>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={styles.header}>
-          <Text style={styles.logo}>🎮</Text>
-          <Text style={styles.title}>Game Registration</Text>
-          <Text style={styles.subtitle}>Sign in to continue</Text>
-        </View>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <AnimatedCard delay={0} style={styles.header}>
+            <Text style={styles.logo}>🎮</Text>
+            <Text style={styles.title}>Game Registration</Text>
+            <Text style={styles.subtitle}>Sign in to continue</Text>
+          </AnimatedCard>
 
-        <View style={styles.form}>
-          <Input
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            placeholder="Enter your email"
-            keyboardType="email-address"
-          />
-          <Input
-            label="Password"
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Enter your password"
-            secureTextEntry
-          />
-
-          <Button
-            title="Sign In"
-            onPress={handleLogin}
-            loading={loading}
-            style={styles.loginButton}
-          />
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Don't have an account? </Text>
-            <Button
-              title="Sign Up"
-              onPress={() => navigation.navigate('Signup')}
-              variant="outline"
-              style={styles.signupButton}
+          <AnimatedCard delay={200} style={styles.form}>
+            <Input
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Enter your email"
+              keyboardType="email-address"
             />
-          </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            <Input
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Enter your password"
+              secureTextEntry
+            />
+
+            <Button
+              title="Sign In"
+              onPress={handleLogin}
+              loading={loading}
+              style={styles.loginButton}
+            />
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>Don't have an account? </Text>
+              <Button
+                title="Sign Up"
+                onPress={() => navigation.navigate('Signup')}
+                variant="outline"
+                style={styles.signupButton}
+              />
+            </View>
+          </AnimatedCard>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </AnimatedBackground>
   );
 };
 
