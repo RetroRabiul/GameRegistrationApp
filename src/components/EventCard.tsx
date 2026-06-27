@@ -10,6 +10,24 @@ interface EventCardProps {
   onPress: () => void;
 }
 
+const GAME_ICONS: Record<string, string> = {
+  freefire: '',
+  bgmi: '🎯',
+  pubg: '',
+  cod: '',
+  valorant: '⚡',
+  other: '🎮',
+};
+
+const GAME_LABELS: Record<string, string> = {
+  freefire: 'Free Fire',
+  bgmi: 'BGMI',
+  pubg: 'PUBG',
+  cod: 'COD',
+  valorant: 'Valorant',
+  other: 'Other',
+};
+
 export const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
   const { colors } = useTheme();
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -54,6 +72,10 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
     }
   };
 
+  const gameType = event.game_type || 'other';
+  const gameMode = event.game_mode || 'squad';
+  const prizePool = event.prize_pool || 0;
+
   return (
     <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
       <TouchableOpacity
@@ -71,6 +93,16 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
             },
           ]}
         >
+          <View style={styles.gameBadge}>
+            <Text style={styles.gameIcon}>{GAME_ICONS[gameType] || ''}</Text>
+            <Text style={[styles.gameLabel, { color: colors.primary }]}>
+              {GAME_LABELS[gameType] || gameType}
+            </Text>
+            <Text style={[styles.modeLabel, { color: colors.textMuted }]}>
+              {gameMode.toUpperCase()}
+            </Text>
+          </View>
+
           <View style={styles.header}>
             <View style={styles.titleRow}>
               {isLive && <PulsingDot color={colors.primary} size={8} style={styles.liveDot} />}
@@ -100,6 +132,13 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
             {event.description}
           </Text>
 
+          {prizePool > 0 && (
+            <View style={[styles.prizeBanner, { backgroundColor: colors.primary + '15' }]}>
+              <Text style={[styles.prizeLabel, { color: colors.textMuted }]}>Prize Pool</Text>
+              <Text style={[styles.prizeValue, { color: colors.primary }]}>৳{prizePool}</Text>
+            </View>
+          )}
+
           <View style={styles.details}>
             <View style={styles.detailRow}>
               <Text style={[styles.detailText, { color: colors.textMuted }]}>
@@ -117,7 +156,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
 
           <View style={[styles.footer, { borderTopColor: colors.surfaceVariant }]}>
             <Text style={[styles.price, { color: colors.primary }]}>
-              ৳{event.price}
+              {event.price}
             </Text>
             <Text
               style={[
@@ -140,6 +179,27 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
     borderWidth: 1,
     padding: Spacing.xl,
+  },
+  gameBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
+  },
+  gameIcon: {
+    fontSize: 18,
+  },
+  gameLabel: {
+    fontSize: FontSize.label,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  modeLabel: {
+    fontSize: FontSize.label,
+    fontWeight: '700',
+    marginLeft: Spacing.sm,
+    textTransform: 'uppercase',
   },
   header: {
     flexDirection: 'row',
@@ -175,6 +235,23 @@ const styles = StyleSheet.create({
   description: {
     fontSize: FontSize.body,
     marginBottom: Spacing.md,
+  },
+  prizeBanner: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.metric,
+    marginBottom: Spacing.md,
+  },
+  prizeLabel: {
+    fontSize: FontSize.label,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  prizeValue: {
+    fontSize: FontSize.title,
+    fontWeight: '900',
   },
   details: {
     marginBottom: Spacing.md,

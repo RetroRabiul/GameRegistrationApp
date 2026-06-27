@@ -1,5 +1,9 @@
 export type UserRole = 'player' | 'admin';
 
+export type GameType = 'freefire' | 'bgmi' | 'pubg' | 'cod' | 'valorant' | 'other';
+export type GameMode = 'solo' | 'duo' | 'squad' | 'custom';
+export type Platform = 'mobile' | 'pc' | 'console' | 'cross-platform';
+
 export interface Profile {
   id: string;
   email: string;
@@ -13,6 +17,11 @@ export interface GameEvent {
   id: string;
   title: string;
   description: string;
+  game_type: GameType;
+  game_mode: GameMode;
+  platform: Platform;
+  prize_pool: number;
+  team_size: number;
   date: string;
   time: string;
   location: string;
