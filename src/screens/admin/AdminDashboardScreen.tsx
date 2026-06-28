@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Spacing, FontSize, BorderRadius } from '../../constants';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { Card } from '../../components/Card';
@@ -9,8 +12,10 @@ import { PulsingDot } from '../../components/PulsingDot';
 import { useRegistrationStore } from '../../store/registrationStore';
 import { useTheme } from '../../theme/ThemeContext';
 import { DashboardStats } from '../../types';
+import { MainStackParamList } from '../../navigation/MainNavigator';
 
 export const AdminDashboardScreen: React.FC = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const { getDashboardStats, loading } = useRegistrationStore();
   const { colors } = useTheme();
   const [stats, setStats] = useState<DashboardStats>({
@@ -76,26 +81,26 @@ export const AdminDashboardScreen: React.FC = () => {
 
       <View style={styles.statsGrid}>
         <MetricCard
-          icon="◫"
+          icon="trophy-outline"
           value={stats.totalEvents}
           label="Total Events"
           accentColor={colors.primary}
         />
         <MetricCard
-          icon="◷"
+          icon="calendar-outline"
           value={stats.upcomingEvents}
           label="Upcoming"
           accentColor={colors.secondary}
         />
         <MetricCard
-          icon="⊕"
+          icon="people-outline"
           value={stats.totalRegistrations}
           label="Paid Registrations"
           accentColor={colors.tertiary}
         />
         <MetricCard
-          icon="◈"
-          value={`৳${stats.totalRevenue}`}
+          icon="cash-outline"
+          value={stats.totalRevenue}
           label="Total Revenue"
           accentColor={colors.gold}
         />
@@ -106,18 +111,26 @@ export const AdminDashboardScreen: React.FC = () => {
           Quick Actions
         </Text>
         <View style={styles.actionsRow}>
-          <View style={[styles.actionItem, { borderColor: colors.surfaceVariant }]}>
-            <Text style={[styles.actionIcon, { color: colors.primary }]}>⊕</Text>
+          <TouchableOpacity
+            style={[styles.actionItem, { borderColor: colors.surfaceVariant }]}
+            onPress={() => navigation.navigate('CreateEvent')}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="add-circle-outline" size={28} color={colors.primary} />
             <Text style={[styles.actionText, { color: colors.text }]}>
               Create Event
             </Text>
-          </View>
-          <View style={[styles.actionItem, { borderColor: colors.surfaceVariant }]}>
-            <Text style={[styles.actionIcon, { color: colors.secondary }]}>⚔</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionItem, { borderColor: colors.surfaceVariant }]}
+            onPress={() => navigation.getParent()?.navigate('Players')}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="people-outline" size={28} color={colors.secondary} />
             <Text style={[styles.actionText, { color: colors.text }]}>
-              View Registrations
+              View Players
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
       </Card>
     </ScrollView>
@@ -125,73 +138,18 @@ export const AdminDashboardScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    padding: Spacing.xl,
-  },
-  heroCard: {
-    borderRadius: BorderRadius.hero,
-    borderWidth: 1,
-    overflow: 'hidden',
-    marginBottom: Spacing.xl,
-  },
-  heroGradient: {
-    padding: Spacing.hero,
-  },
-  heroLiveRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  heroLiveText: {
-    fontSize: FontSize.label,
-    fontWeight: '700',
-    marginLeft: Spacing.md,
-    letterSpacing: 1,
-  },
-  heroTitle: {
-    fontSize: FontSize.hero,
-    fontWeight: '900',
-    marginBottom: Spacing.md,
-  },
-  heroSubtitle: {
-    fontSize: FontSize.body,
-    lineHeight: 22,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: Spacing.xl,
-  },
-  actionsCard: {
-    marginBottom: Spacing.xl,
-  },
-  sectionTitle: {
-    fontSize: FontSize.heading,
-    fontWeight: '900',
-    marginBottom: Spacing.xl,
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: Spacing.xl,
-  },
-  actionItem: {
-    flex: 1,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: BorderRadius.standard,
-    padding: Spacing.xxl,
-  },
-  actionIcon: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: Spacing.md,
-  },
-  actionText: {
-    fontSize: FontSize.body,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
+  container: { flex: 1 },
+  content: { padding: Spacing.xl },
+  heroCard: { borderRadius: BorderRadius.hero, borderWidth: 1, overflow: 'hidden', marginBottom: Spacing.xl },
+  heroGradient: { padding: Spacing.hero },
+  heroLiveRow: { flexDirection: 'row', alignItems: 'center', marginBottom: Spacing.md },
+  heroLiveText: { fontSize: FontSize.label, fontWeight: '700', marginLeft: Spacing.md, letterSpacing: 1 },
+  heroTitle: { fontSize: FontSize.hero, fontWeight: '900', marginBottom: Spacing.md },
+  heroSubtitle: { fontSize: FontSize.body, lineHeight: 22 },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: Spacing.xl },
+  actionsCard: { marginBottom: Spacing.xl },
+  sectionTitle: { fontSize: FontSize.heading, fontWeight: '900', marginBottom: Spacing.xl },
+  actionsRow: { flexDirection: 'row', gap: Spacing.xl },
+  actionItem: { flex: 1, alignItems: 'center', borderWidth: 1, borderRadius: BorderRadius.standard, padding: Spacing.xxl },
+  actionText: { fontSize: FontSize.body, fontWeight: '700', textAlign: 'center', marginTop: Spacing.md },
 });

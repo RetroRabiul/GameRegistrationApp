@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Spacing, FontSize, BorderRadius } from '../constants';
 import { useTheme } from '../theme/ThemeContext';
 
@@ -24,7 +25,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({ icon, value, label, acce
         },
       ]}
     >
-      <Text style={[styles.icon, { color: iconColor }]}>{icon}</Text>
+      <Ionicons name={icon as any} size={20} color={iconColor} style={styles.icon} />
       <Text style={[styles.value, { color: accentColor || colors.text }]}>
         {value}
       </Text>
@@ -36,16 +37,14 @@ export const MetricCard: React.FC<MetricCardProps> = ({ icon, value, label, acce
 const styles = StyleSheet.create({
   card: {
     flex: 1,
+    minWidth: '45%',
     margin: Spacing.xs,
-    backgroundColor: '#131B2A',
     borderRadius: BorderRadius.metric,
     borderWidth: 1,
     padding: Spacing.xl,
     alignItems: 'center',
   },
   icon: {
-    fontSize: 18,
-    fontWeight: '700',
     marginBottom: Spacing.md,
     opacity: 0.8,
   },

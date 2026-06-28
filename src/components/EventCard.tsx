@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { Animated, TouchableOpacity, Text, View, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Spacing, FontSize, BorderRadius } from '../constants';
 import { useTheme } from '../theme/ThemeContext';
 import { GameEvent } from '../types';
@@ -10,13 +11,13 @@ interface EventCardProps {
   onPress: () => void;
 }
 
-const GAME_ICONS: Record<string, string> = {
-  freefire: '',
-  bgmi: '🎯',
-  pubg: '',
-  cod: '',
-  valorant: '⚡',
-  other: '🎮',
+const GAME_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
+  freefire: 'flame',
+  bgmi: 'aperture',
+  pubg: 'shield',
+  cod: 'hardware-chip',
+  valorant: 'flash',
+  other: 'game-controller',
 };
 
 const GAME_LABELS: Record<string, string> = {
@@ -94,7 +95,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onPress }) => {
           ]}
         >
           <View style={styles.gameBadge}>
-            <Text style={styles.gameIcon}>{GAME_ICONS[gameType] || ''}</Text>
+            <Ionicons name={GAME_ICONS[gameType] || 'game-controller'} size={18} color={colors.primary} />
             <Text style={[styles.gameLabel, { color: colors.primary }]}>
               {GAME_LABELS[gameType] || gameType}
             </Text>
@@ -185,9 +186,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing.md,
     gap: Spacing.sm,
-  },
-  gameIcon: {
-    fontSize: 18,
   },
   gameLabel: {
     fontSize: FontSize.label,

@@ -4,10 +4,12 @@ import { Registration, DashboardStats } from '../types';
 
 interface RegistrationState {
   registrations: Registration[];
+  allRegistrations: Registration[];
   loading: boolean;
   error: string | null;
   fetchMyRegistrations: () => Promise<void>;
   fetchEventRegistrations: (eventId: string) => Promise<Registration[]>;
+  fetchAllRegistrations: () => Promise<void>;
   registerForEvent: (eventId: string) => Promise<{ success: boolean; registrationId?: string }>;
   cancelRegistration: (id: string) => Promise<boolean>;
   updatePaymentStatus: (registrationId: string, status: 'paid' | 'failed', paymentId?: string) => Promise<boolean>;
@@ -17,6 +19,7 @@ interface RegistrationState {
 
 export const useRegistrationStore = create<RegistrationState>((set, get) => ({
   registrations: [],
+  allRegistrations: [],
   loading: false,
   error: null,
 
@@ -43,7 +46,7 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
     try {
       const { data, error } = await supabase
         .from('registrations')
-        .select('*, profile:profiles(*)')
+        .select('*, profile:profiles(*), event:events(*)')
         .eq('event_id', eventId)
         .order('created_at', { ascending: false });
 
@@ -52,6 +55,21 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
     } catch (error: any) {
       set({ error: error.message });
       return [];
+    }
+  },
+
+  fetchAllRegistrations: async () => {
+    try {
+      set({ loading: true, error: null });
+      const { data, error } = await supabase
+        .from('registrations')
+        .select('*, profile:profiles(*), event:events(*)')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      set({ allRegistrations: (data as Registration[]) || [], loading: false });
+    } catch (error: any) {
+      set({ error: error.message, loading: false });
     }
   },
 

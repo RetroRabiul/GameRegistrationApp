@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
-import { Spacing, FontSize, BorderRadius } from '../../constants';
+import { Ionicons } from '@expo/vector-icons';
+import { Spacing, FontSize, BorderRadius, CURRENCY_SYMBOL } from '../../constants';
 import { Card } from '../../components/Card';
 import { MetricCard } from '../../components/MetricCard';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
@@ -63,34 +64,17 @@ export const ViewRegistrationsScreen: React.FC<ViewRegistrationsScreenProps> = (
       </View>
 
       <View style={styles.statsRow}>
-        <MetricCard icon="⊕" value={registrations.length} label="Total" />
-        <MetricCard
-          icon="◈"
-          value={paidCount}
-          label="Paid"
-          accentColor={colors.tertiary}
-        />
-        <MetricCard
-          icon="◷"
-          value={registrations.length - paidCount}
-          label="Pending"
-          accentColor={colors.gold}
-        />
-        <MetricCard
-          icon="◈"
-          value={`৳${totalRevenue}`}
-          label="Revenue"
-          accentColor={colors.primary}
-        />
+        <MetricCard icon="people-outline" value={registrations.length} label="Total" />
+        <MetricCard icon="checkmark-circle-outline" value={paidCount} label="Paid" accentColor={colors.tertiary} />
+        <MetricCard icon="time-outline" value={registrations.length - paidCount} label="Pending" accentColor={colors.gold} />
+        <MetricCard icon="cash-outline" value={totalRevenue} label="Revenue" accentColor={colors.primary} />
       </View>
 
       {registrations.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Card style={styles.emptyCard}>
-            <Text style={[styles.emptyIcon, { color: colors.textMuted }]}>⊕</Text>
-            <Text style={[styles.emptyText, { color: colors.text }]}>
-              No registrations yet
-            </Text>
+            <Ionicons name="people-outline" size={48} color={colors.textMuted} />
+            <Text style={[styles.emptyText, { color: colors.text }]}>No registrations yet</Text>
           </Card>
         </View>
       ) : (
@@ -101,13 +85,20 @@ export const ViewRegistrationsScreen: React.FC<ViewRegistrationsScreenProps> = (
             return (
               <Card style={styles.card}>
                 <View style={styles.cardHeader}>
-                  <View>
-                    <Text style={[styles.playerName, { color: colors.text }]}>
-                      {profile?.full_name || 'Unknown'}
-                    </Text>
-                    <Text style={[styles.playerEmail, { color: colors.textMuted }]}>
-                      {profile?.email || ''}
-                    </Text>
+                  <View style={styles.playerInfo}>
+                    <View style={[styles.avatar, { backgroundColor: colors.primary + '20' }]}>
+                      <Text style={[styles.avatarText, { color: colors.primary }]}>
+                        {profile?.full_name?.charAt(0).toUpperCase() || '?'}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={[styles.playerName, { color: colors.text }]}>
+                        {profile?.full_name || 'Unknown'}
+                      </Text>
+                      <Text style={[styles.playerEmail, { color: colors.textMuted }]}>
+                        {profile?.email || ''}
+                      </Text>
+                    </View>
                   </View>
                   <View
                     style={[
@@ -131,16 +122,25 @@ export const ViewRegistrationsScreen: React.FC<ViewRegistrationsScreenProps> = (
 
                 <View style={[styles.cardDetails, { borderTopColor: colors.surfaceVariant }]}>
                   {profile?.phone && (
-                    <Text style={[styles.detailText, { color: colors.textMuted }]}>
-                      {profile.phone}
-                    </Text>
+                    <View style={styles.detailRow}>
+                      <Ionicons name="phone-portrait-outline" size={14} color={colors.textMuted} />
+                      <Text style={[styles.detailText, { color: colors.textMuted }]}>
+                        {profile.phone}
+                      </Text>
+                    </View>
                   )}
-                  <Text style={[styles.detailText, { color: colors.textMuted }]}>
-                    Registered: {new Date(item.created_at).toLocaleDateString()}
-                  </Text>
-                  <Text style={[styles.detailText, { color: colors.textMuted }]}>
-                    Status: {item.status}
-                  </Text>
+                  <View style={styles.detailRow}>
+                    <Ionicons name="calendar-outline" size={14} color={colors.textMuted} />
+                    <Text style={[styles.detailText, { color: colors.textMuted }]}>
+                      Registered: {new Date(item.created_at).toLocaleDateString()}
+                    </Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Ionicons name="pricetag-outline" size={14} color={colors.textMuted} />
+                    <Text style={[styles.detailText, { color: colors.primary, fontWeight: '700' }]}>
+                      Entry Fee: {CURRENCY_SYMBOL}{event.price}
+                    </Text>
+                  </View>
                 </View>
               </Card>
             );
@@ -161,83 +161,25 @@ export const ViewRegistrationsScreen: React.FC<ViewRegistrationsScreenProps> = (
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    padding: Spacing.xl,
-    paddingBottom: Spacing.md,
-  },
-  title: {
-    fontSize: FontSize.title,
-    fontWeight: '900',
-  },
-  subtitle: {
-    fontSize: FontSize.body,
-    marginTop: Spacing.xs,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.xl,
-  },
-  listContent: {
-    padding: Spacing.xl,
-    paddingTop: 0,
-  },
-  card: {
-    marginBottom: Spacing.xl,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: Spacing.md,
-  },
-  playerName: {
-    fontSize: FontSize.bodyLg,
-    fontWeight: '700',
-  },
-  playerEmail: {
-    fontSize: FontSize.caption,
-    marginTop: 2,
-  },
-  paymentBadge: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.metric,
-    borderWidth: 1,
-  },
-  paymentText: {
-    fontSize: FontSize.label,
-    fontWeight: '700',
-    textTransform: 'capitalize',
-  },
-  cardDetails: {
-    borderTopWidth: 1,
-    paddingTop: Spacing.md,
-  },
-  detailText: {
-    fontSize: FontSize.body,
-    marginBottom: Spacing.xs,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: Spacing.xl,
-  },
-  emptyCard: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xxxl * 2,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.xl,
-  },
-  emptyText: {
-    fontSize: FontSize.bodyLg,
-    fontWeight: '700',
-  },
+  container: { flex: 1 },
+  header: { padding: Spacing.xl, paddingBottom: Spacing.md },
+  title: { fontSize: FontSize.title, fontWeight: '900' },
+  subtitle: { fontSize: FontSize.body, marginTop: Spacing.xs },
+  statsRow: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: Spacing.xl, marginBottom: Spacing.xl },
+  listContent: { padding: Spacing.xl, paddingTop: 0 },
+  card: { marginBottom: Spacing.lg },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: Spacing.md },
+  playerInfo: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  avatar: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginRight: Spacing.md },
+  avatarText: { fontSize: FontSize.body, fontWeight: '900' },
+  playerName: { fontSize: FontSize.bodyLg, fontWeight: '700' },
+  playerEmail: { fontSize: FontSize.caption, marginTop: 2 },
+  paymentBadge: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: BorderRadius.metric, borderWidth: 1 },
+  paymentText: { fontSize: FontSize.label, fontWeight: '700', textTransform: 'capitalize' },
+  cardDetails: { borderTopWidth: 1, paddingTop: Spacing.md },
+  detailRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.xs },
+  detailText: { fontSize: FontSize.body },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.xl },
+  emptyCard: { alignItems: 'center', paddingVertical: Spacing.xxxl * 2 },
+  emptyText: { fontSize: FontSize.bodyLg, fontWeight: '700', marginTop: Spacing.xl },
 });

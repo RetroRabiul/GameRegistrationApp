@@ -57,9 +57,9 @@ export const Input: React.FC<InputProps> = ({
         <TextInput
           style={[
             styles.input,
+            leadingIcon ? styles.inputWithIcon : null,
             {
               color: colors.text,
-              paddingLeft: leadingIcon ? Spacing.md : Spacing.xl,
             },
           ]}
           value={value}
@@ -103,12 +103,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: Spacing.xl,
     zIndex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   input: {
     flex: 1,
     fontSize: FontSize.body,
     paddingVertical: Spacing.md + 4,
     paddingRight: Spacing.xl,
+    paddingLeft: Spacing.xl,
+  },
+  inputWithIcon: {
+    paddingLeft: 48,
   },
   multiline: {
     minHeight: 100,

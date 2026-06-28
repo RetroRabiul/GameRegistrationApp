@@ -2,17 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Spacing, FontSize } from '../../constants';
-import { EventCard } from '../../components/EventCard';
-import { AnimatedCard } from '../../components/AnimatedCard';
-import { Card } from '../../components/Card';
-import { LoadingSpinner } from '../../components/LoadingSpinner';
-import { useEventStore } from '../../store/eventStore';
-import { useTheme } from '../../theme/ThemeContext';
-import { GameEvent } from '../../types';
-import { MainStackParamList } from '../../navigation/MainNavigator';
+import { Ionicons } from '@expo/vector-icons';
+import { Spacing, FontSize } from '../constants';
+import { EventCard } from '../components/EventCard';
+import { AnimatedCard } from '../components/AnimatedCard';
+import { Card } from '../components/Card';
+import { LoadingSpinner } from '../components/LoadingSpinner';
+import { useEventStore } from '../store/eventStore';
+import { useTheme } from '../theme/ThemeContext';
+import { GameEvent } from '../types';
+import { MainStackParamList } from '../navigation/MainNavigator';
 
-export const EventListScreen: React.FC = () => {
+export const HubScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const { events, loading, fetchEvents } = useEventStore();
   const { colors } = useTheme();
@@ -41,7 +42,10 @@ export const EventListScreen: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Events</Text>
+        <View style={styles.headerRow}>
+          <Ionicons name="game-controller" size={28} color={colors.primary} />
+          <Text style={[styles.title, { color: colors.text }]}>Game Events</Text>
+        </View>
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>
           {upcomingEvents.length} events available
         </Text>
@@ -50,12 +54,12 @@ export const EventListScreen: React.FC = () => {
       {upcomingEvents.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Card style={styles.emptyCard}>
-            <Text style={[styles.emptyIcon, { color: colors.textMuted }]}>◫</Text>
+            <Ionicons name="trophy-outline" size={48} color={colors.textMuted} />
             <Text style={[styles.emptyText, { color: colors.text }]}>
               No events available yet
             </Text>
             <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
-              Check back later!
+              Check back later for upcoming tournaments!
             </Text>
           </Card>
         </View>
@@ -90,6 +94,11 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
     paddingBottom: Spacing.md,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
   title: {
     fontSize: FontSize.hero,
     fontWeight: '900',
@@ -112,16 +121,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.xxxl * 2,
   },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.xl,
-  },
   emptyText: {
     fontSize: FontSize.bodyLg,
     fontWeight: '700',
     marginBottom: Spacing.md,
+    marginTop: Spacing.xl,
   },
   emptySubtext: {
     fontSize: FontSize.body,
+    textAlign: 'center',
   },
 });

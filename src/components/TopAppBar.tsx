@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { Spacing, FontSize } from '../constants';
 import { useTheme } from '../theme/ThemeContext';
 import { useAuthStore } from '../store/authStore';
@@ -27,14 +28,14 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({ showLogout = true }) => {
     >
       <View style={styles.content}>
         <View style={styles.brand}>
-          <Text style={[styles.trophyIcon, { color: colors.primary }]}>🏆</Text>
+          <Ionicons name="trophy" size={24} color={colors.primary} />
           <Text
             style={[
               styles.appName,
               { color: colors.text, letterSpacing: 1 },
             ]}
           >
-            ARENA
+            TOURNAMENT ARENA
           </Text>
         </View>
 
@@ -44,9 +45,11 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({ showLogout = true }) => {
             style={styles.iconButton}
             activeOpacity={0.7}
           >
-            <Text style={[styles.iconText, { color: colors.textMuted }]}>
-              {isDark ? '☀' : '🌙'}
-            </Text>
+            <Ionicons
+              name={isDark ? 'sunny-outline' : 'moon-outline'}
+              size={22}
+              color={colors.textMuted}
+            />
           </TouchableOpacity>
 
           {showLogout && (
@@ -55,7 +58,7 @@ export const TopAppBar: React.FC<TopAppBarProps> = ({ showLogout = true }) => {
               style={styles.iconButton}
               activeOpacity={0.7}
             >
-              <Text style={[styles.iconText, { color: colors.error }]}>⏻</Text>
+              <Ionicons name="log-out-outline" size={22} color={colors.error} />
             </TouchableOpacity>
           )}
         </View>
@@ -79,14 +82,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  trophyIcon: {
-    fontSize: 28,
-    marginRight: Spacing.md,
-  },
   appName: {
-    fontSize: FontSize.heading + 2,
+    fontSize: FontSize.heading,
     fontWeight: '900',
     textTransform: 'uppercase',
+    marginLeft: Spacing.md,
   },
   actions: {
     flexDirection: 'row',
@@ -95,8 +95,5 @@ const styles = StyleSheet.create({
   iconButton: {
     padding: Spacing.md,
     marginLeft: Spacing.sm,
-  },
-  iconText: {
-    fontSize: 22,
   },
 });

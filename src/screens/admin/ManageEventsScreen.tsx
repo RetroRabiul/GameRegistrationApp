@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Alert, RefreshControl } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Alert, RefreshControl, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Spacing, FontSize, BorderRadius } from '../../constants';
+import { Ionicons } from '@expo/vector-icons';
+import { Spacing, FontSize, BorderRadius, CURRENCY_SYMBOL } from '../../constants';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
@@ -88,10 +89,8 @@ export const ManageEventsScreen: React.FC = () => {
       {events.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Card style={styles.emptyCard}>
-            <Text style={[styles.emptyIcon, { color: colors.textMuted }]}>◫</Text>
-            <Text style={[styles.emptyText, { color: colors.text }]}>
-              No events created yet
-            </Text>
+            <Ionicons name="trophy-outline" size={48} color={colors.textMuted} />
+            <Text style={[styles.emptyText, { color: colors.text }]}>No events created yet</Text>
             <Button
               title="Create Your First Event"
               onPress={() => navigation.navigate('CreateEvent')}
@@ -105,77 +104,77 @@ export const ManageEventsScreen: React.FC = () => {
           renderItem={({ item }) => (
             <Card style={styles.card}>
               <View style={styles.cardHeader}>
-                <Text
-                  style={[styles.eventTitle, { color: colors.text }]}
-                  numberOfLines={1}
-                >
+                <Text style={[styles.eventTitle, { color: colors.text }]} numberOfLines={1}>
                   {item.title}
                 </Text>
                 <View
                   style={[
                     styles.statusBadge,
-                    {
-                      borderColor: getStatusColor(item.status),
-                      backgroundColor: getStatusColor(item.status) + '15',
-                    },
+                    { borderColor: getStatusColor(item.status), backgroundColor: getStatusColor(item.status) + '15' },
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.statusText,
-                      { color: getStatusColor(item.status) },
-                    ]}
-                  >
+                  <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
                     {item.status}
                   </Text>
                 </View>
               </View>
 
               <View style={styles.details}>
-                <Text style={[styles.detailText, { color: colors.textMuted }]}>
-                  {formatDate(item.date)} | {item.time?.substring(0, 5)}
-                </Text>
-                <Text style={[styles.detailText, { color: colors.textMuted }]}>
-                  {item.location}
-                </Text>
-                <Text style={[styles.detailText, { color: colors.textMuted }]}>
-                  {item.filled_slots}/{item.max_slots} slots | ৳{item.price}
-                </Text>
+                <View style={styles.detailRow}>
+                  <Ionicons name="calendar-outline" size={14} color={colors.textMuted} />
+                  <Text style={[styles.detailText, { color: colors.textMuted }]}>
+                    {formatDate(item.date)} | {item.time?.substring(0, 5)}
+                  </Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Ionicons name="location-outline" size={14} color={colors.textMuted} />
+                  <Text style={[styles.detailText, { color: colors.textMuted }]}>
+                    {item.location}
+                  </Text>
+                </View>
+                <View style={styles.detailRow}>
+                  <Ionicons name="people-outline" size={14} color={colors.textMuted} />
+                  <Text style={[styles.detailText, { color: colors.textMuted }]}>
+                    {item.filled_slots}/{item.max_slots} slots
+                  </Text>
+                  <Text style={[styles.detailText, { color: colors.primary, fontWeight: '700', marginLeft: Spacing.md }]}>
+                    {CURRENCY_SYMBOL}{item.price}
+                  </Text>
+                </View>
               </View>
 
               <View style={[styles.actions, { borderTopColor: colors.surfaceVariant }]}>
-                <Button
-                  title="Registrations"
+                <TouchableOpacity
+                  style={[styles.actionBtn, { borderColor: colors.primary + '40', backgroundColor: colors.primary + '10' }]}
                   onPress={() => navigation.navigate('ViewRegistrations', { event: item })}
-                  variant="outline"
-                  fullWidth={false}
-                  style={styles.actionButton}
-                />
-                <Button
-                  title="Edit"
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="people-outline" size={16} color={colors.primary} />
+                  <Text style={[styles.actionBtnText, { color: colors.primary }]}>Players</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionBtn, { borderColor: colors.secondary + '40', backgroundColor: colors.secondary + '10' }]}
                   onPress={() => navigation.navigate('EditEvent', { event: item })}
-                  variant="secondary"
-                  fullWidth={false}
-                  style={styles.actionButton}
-                />
-                <Button
-                  title="Delete"
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="create-outline" size={16} color={colors.secondary} />
+                  <Text style={[styles.actionBtnText, { color: colors.secondary }]}>Edit</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionBtn, { borderColor: colors.error + '40', backgroundColor: colors.error + '10' }]}
                   onPress={() => handleDelete(item.id, item.title)}
-                  variant="danger"
-                  fullWidth={false}
-                  style={styles.actionButton}
-                />
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="trash-outline" size={16} color={colors.error} />
+                  <Text style={[styles.actionBtnText, { color: colors.error }]}>Delete</Text>
+                </TouchableOpacity>
               </View>
             </Card>
           )}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={colors.primary}
-            />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
         />
       )}
@@ -184,98 +183,25 @@ export const ManageEventsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: Spacing.xl,
-    paddingBottom: Spacing.md,
-  },
-  title: {
-    fontSize: FontSize.hero,
-    fontWeight: '900',
-  },
-  subtitle: {
-    fontSize: FontSize.body,
-    marginTop: Spacing.xs,
-  },
-  createButton: {
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
-    minHeight: 40,
-  },
-  listContent: {
-    padding: Spacing.xl,
-    paddingTop: 0,
-  },
-  card: {
-    marginBottom: Spacing.xl,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  eventTitle: {
-    fontSize: FontSize.cardTitle,
-    fontWeight: '700',
-    flex: 1,
-    marginRight: Spacing.md,
-  },
-  statusBadge: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.metric,
-    borderWidth: 1,
-  },
-  statusText: {
-    fontSize: FontSize.label,
-    fontWeight: '700',
-    textTransform: 'capitalize',
-  },
-  details: {
-    marginBottom: Spacing.md,
-  },
-  detailText: {
-    fontSize: FontSize.body,
-    marginBottom: Spacing.xs,
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    paddingTop: Spacing.md,
-    gap: Spacing.md,
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    minHeight: 38,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: Spacing.xl,
-  },
-  emptyCard: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xxxl * 2,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.xl,
-  },
-  emptyText: {
-    fontSize: FontSize.bodyLg,
-    fontWeight: '700',
-    marginBottom: Spacing.xl,
-  },
-  emptyButton: {
-    minWidth: 200,
-  },
+  container: { flex: 1 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: Spacing.xl, paddingBottom: Spacing.md },
+  title: { fontSize: FontSize.hero, fontWeight: '900' },
+  subtitle: { fontSize: FontSize.body, marginTop: Spacing.xs },
+  createButton: { paddingVertical: Spacing.md, paddingHorizontal: Spacing.xl, minHeight: 40 },
+  listContent: { padding: Spacing.xl, paddingTop: 0 },
+  card: { marginBottom: Spacing.xl },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md },
+  eventTitle: { fontSize: FontSize.cardTitle, fontWeight: '700', flex: 1, marginRight: Spacing.md },
+  statusBadge: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: BorderRadius.metric, borderWidth: 1 },
+  statusText: { fontSize: FontSize.label, fontWeight: '700', textTransform: 'capitalize' },
+  details: { marginBottom: Spacing.md },
+  detailRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.xs },
+  detailText: { fontSize: FontSize.body },
+  actions: { flexDirection: 'row', justifyContent: 'flex-end', borderTopWidth: 1, paddingTop: Spacing.md, gap: Spacing.md },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.xl, paddingVertical: Spacing.md, borderRadius: BorderRadius.metric, borderWidth: 1, gap: Spacing.sm },
+  actionBtnText: { fontSize: FontSize.caption, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.xl },
+  emptyCard: { alignItems: 'center', paddingVertical: Spacing.xxxl * 2 },
+  emptyText: { fontSize: FontSize.bodyLg, fontWeight: '700', marginBottom: Spacing.xl, marginTop: Spacing.xl },
+  emptyButton: { minWidth: 200 },
 });

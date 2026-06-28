@@ -1,3 +1,5 @@
+import Constants from 'expo-constants';
+
 export const DarkColors = {
   background: '#0A0E17',
   surface: '#131B2A',
@@ -72,10 +74,14 @@ export const BorderRadius = {
   full: 9999,
 };
 
-export const SUPABASE_URL = 'https://bkkoydsrmkegvgenmylv.supabase.co';
-export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJra295ZHNybWtlZ3ZnZW5teWx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1MzIwOTEsImV4cCI6MjA5ODEwODA5MX0.3HZxcgWA53ftAgq0Jb7ba9amWRJdX04CoG3jFQScCNY';
+const expoConfig = Constants.expoConfig?.extra || {};
+
+export const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || expoConfig.SUPABASE_URL || '';
+export const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || expoConfig.SUPABASE_ANON_KEY || '';
 
 export const BKASH_CONFIG = {
-  BASE_URL: 'https://tokenized.sandbox.bka.sh/v1.2.0-beta',
-  APP_KEY: 'YOUR_BKASH_APP_KEY',
+  BASE_URL: process.env.EXPO_PUBLIC_BKASH_API_URL || expoConfig.BKASH_API_URL || '',
+  APP_KEY: process.env.EXPO_PUBLIC_BKASH_APP_KEY || expoConfig.BKASH_APP_KEY || '',
 };
+
+export const CURRENCY_SYMBOL = '\u09F3';

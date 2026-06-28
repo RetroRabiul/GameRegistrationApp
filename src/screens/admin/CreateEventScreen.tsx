@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Alert, TouchableOpacity, Platform as RNPlatform } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Spacing, FontSize, BorderRadius } from '../../constants';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { Ionicons } from '@expo/vector-icons';
+import { Spacing, FontSize, BorderRadius, CURRENCY_SYMBOL } from '../../constants';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { Card } from '../../components/Card';
@@ -14,13 +16,13 @@ interface CreateEventScreenProps {
   navigation: NativeStackNavigationProp<MainStackParamList, 'CreateEvent'>;
 }
 
-const GAME_TYPES: { value: GameType; label: string; icon: string }[] = [
-  { value: 'freefire', label: 'Free Fire', icon: '' },
-  { value: 'bgmi', label: 'BGMI', icon: '🎯' },
-  { value: 'pubg', label: 'PUBG', icon: '' },
-  { value: 'cod', label: 'Call of Duty', icon: '' },
-  { value: 'valorant', label: 'Valorant', icon: '⚡' },
-  { value: 'other', label: 'Other', icon: '🎮' },
+const GAME_TYPES: { value: GameType; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  { value: 'freefire', label: 'Free Fire', icon: 'flame' },
+  { value: 'bgmi', label: 'BGMI', icon: 'aperture' },
+  { value: 'pubg', label: 'PUBG', icon: 'shield' },
+  { value: 'cod', label: 'Call of Duty', icon: 'hardware-chip' },
+  { value: 'valorant', label: 'Valorant', icon: 'flash' },
+  { value: 'other', label: 'Other', icon: 'game-controller' },
 ];
 
 const GAME_MODES: { value: GameMode; label: string }[] = [
@@ -52,38 +54,80 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
   const [location, setLocation] = useState('');
   const [price, setPrice] = useState('');
   const [maxSlots, setMaxSlots] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [tempDate, setTempDate] = useState(new Date());
+  const [tempTime, setTempTime] = useState(new Date());
+
+  const formatDate = (d: Date) => {
+    return d.toISOString().split('T')[0];
+  };
+
+  const formatTime = (d: Date) => {
+    const hours = d.getHours().toString().padStart(2, '0');
+    const minutes = d.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
+  const formatDateDisplay = (dateStr: string) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const formatTimeDisplay = (timeStr: string) => {
+    if (!timeStr) return '';
+    const [h, m] = timeStr.split(':');
+    const hour = parseInt(h);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${m} ${ampm}`;
+  };
+
+  const onDateChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (RNPlatform.OS === 'android') {
+      setShowDatePicker(false);
+      if (selectedDate) {
+        setDate(formatDate(selectedDate));
+      }
+    } else if (selectedDate) {
+      setTempDate(selectedDate);
+    }
+  };
+
+  const onTimeChange = (_event: DateTimePickerEvent, selectedTime?: Date) => {
+    if (RNPlatform.OS === 'android') {
+      setShowTimePicker(false);
+      if (selectedTime) {
+        setTime(formatTime(selectedTime));
+      }
+    } else if (selectedTime) {
+      setTempTime(selectedTime);
+    }
+  };
+
+  const confirmDate = () => {
+    setDate(formatDate(tempDate));
+    setShowDatePicker(false);
+  };
+
+  const confirmTime = () => {
+    setTime(formatTime(tempTime));
+    setShowTimePicker(false);
+  };
 
   const validate = () => {
-    if (!title.trim()) {
-      Alert.alert('Error', 'Title is required');
-      return false;
-    }
-    if (!date.trim()) {
-      Alert.alert('Error', 'Date is required (format: YYYY-MM-DD)');
-      return false;
-    }
-    if (!time.trim()) {
-      Alert.alert('Error', 'Time is required (format: HH:MM)');
-      return false;
-    }
-    if (!location.trim()) {
-      Alert.alert('Error', 'Location is required');
-      return false;
-    }
-    if (!price || parseFloat(price) < 0) {
-      Alert.alert('Error', 'Valid price is required');
-      return false;
-    }
-    if (!maxSlots || parseInt(maxSlots) < 1) {
-      Alert.alert('Error', 'Valid max slots is required');
-      return false;
-    }
+    if (!title.trim()) { Alert.alert('Error', 'Title is required'); return false; }
+    if (!date.trim()) { Alert.alert('Error', 'Date is required'); return false; }
+    if (!time.trim()) { Alert.alert('Error', 'Time is required'); return false; }
+    if (!location.trim()) { Alert.alert('Error', 'Location is required'); return false; }
+    if (!price || parseFloat(price) < 0) { Alert.alert('Error', 'Valid price is required'); return false; }
+    if (!maxSlots || parseInt(maxSlots) < 1) { Alert.alert('Error', 'Valid max slots is required'); return false; }
     return true;
   };
 
   const handleCreate = async () => {
     if (!validate()) return;
-
     const success = await createEvent({
       title: title.trim(),
       description: description.trim(),
@@ -100,26 +144,18 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
       status: 'upcoming',
       created_by: '',
     });
-
     if (success) {
-      Alert.alert('Success', 'Event created successfully', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      Alert.alert('Success', 'Event created successfully', [{ text: 'OK', onPress: () => navigation.goBack() }]);
     } else {
       Alert.alert('Error', 'Failed to create event');
     }
   };
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      keyboardShouldPersistTaps="handled"
-    >
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} keyboardShouldPersistTaps="handled">
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>Create New Event</Text>
-        <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-          Fill in the event details
-        </Text>
+        <Text style={[styles.subtitle, { color: colors.textMuted }]}>Fill in the event details</Text>
       </View>
 
       <Card style={styles.form}>
@@ -138,7 +174,11 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
               ]}
               onPress={() => setGameType(game.value)}
             >
-              <Text style={styles.gameTypeIcon}>{game.icon}</Text>
+              <Ionicons
+                name={game.icon}
+                size={24}
+                color={gameType === game.value ? colors.primary : colors.textMuted}
+              />
               <Text
                 style={[
                   styles.gameTypeLabel,
@@ -165,12 +205,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
               ]}
               onPress={() => setGameMode(mode.value)}
             >
-              <Text
-                style={[
-                  styles.modeLabel,
-                  { color: gameMode === mode.value ? colors.primary : colors.textMuted },
-                ]}
-              >
+              <Text style={[styles.modeLabel, { color: gameMode === mode.value ? colors.primary : colors.textMuted }]}>
                 {mode.label}
               </Text>
             </TouchableOpacity>
@@ -191,12 +226,7 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
               ]}
               onPress={() => setPlatform(plat.value)}
             >
-              <Text
-                style={[
-                  styles.modeLabel,
-                  { color: platform === plat.value ? colors.primary : colors.textMuted },
-                ]}
-              >
+              <Text style={[styles.modeLabel, { color: platform === plat.value ? colors.primary : colors.textMuted }]}>
                 {plat.label}
               </Text>
             </TouchableOpacity>
@@ -205,166 +235,127 @@ export const CreateEventScreen: React.FC<CreateEventScreenProps> = ({ navigation
 
         <View style={styles.row}>
           <View style={styles.halfInput}>
-            <Input
-              label="Prize Pool (BDT)"
-              value={prizePool}
-              onChangeText={setPrizePool}
-              placeholder="0"
-              keyboardType="numeric"
-            />
+            <Input label={`Prize Pool (${CURRENCY_SYMBOL})`} value={prizePool} onChangeText={setPrizePool} placeholder="0" keyboardType="numeric" />
           </View>
           <View style={styles.halfInput}>
-            <Input
-              label="Team Size"
-              value={teamSize}
-              onChangeText={setTeamSize}
-              placeholder="4"
-              keyboardType="numeric"
-            />
+            <Input label="Team Size" value={teamSize} onChangeText={setTeamSize} placeholder="4" keyboardType="numeric" />
           </View>
         </View>
 
-        <Text style={[styles.sectionLabel, { color: colors.text, marginTop: Spacing.lg }]}>
-          Event Details
-        </Text>
+        <Text style={[styles.sectionLabel, { color: colors.text, marginTop: Spacing.lg }]}>Event Details</Text>
 
-        <Input
-          label="Event Title *"
-          value={title}
-          onChangeText={setTitle}
-          placeholder="e.g., Free Fire Tournament Season 3"
-        />
-        <Input
-          label="Description"
-          value={description}
-          onChangeText={setDescription}
-          placeholder="Describe the event, rules, prizes, etc."
-          multiline
-        />
-        <Input
-          label="Date *"
-          value={date}
-          onChangeText={setDate}
-          placeholder="YYYY-MM-DD"
-        />
-        <Input
-          label="Time *"
-          value={time}
-          onChangeText={setTime}
-          placeholder="HH:MM (24-hour format)"
-        />
-        <Input
-          label="Location *"
-          value={location}
-          onChangeText={setLocation}
-          placeholder="e.g., Online / Dhaka Cyber Arena"
-        />
-        <Input
-          label="Entry Fee (BDT) *"
-          value={price}
-          onChangeText={setPrice}
-          placeholder="0"
-          keyboardType="numeric"
-        />
-        <Input
-          label="Max Slots *"
-          value={maxSlots}
-          onChangeText={setMaxSlots}
-          placeholder="50"
-          keyboardType="numeric"
-        />
+        <Input label="Event Title *" value={title} onChangeText={setTitle} placeholder="e.g., Free Fire Tournament Season 3" />
+        <Input label="Description" value={description} onChangeText={setDescription} placeholder="Describe the event, rules, prizes, etc." multiline />
 
-        <Button
-          title="Create Event"
-          onPress={handleCreate}
-          loading={loading}
-          style={styles.createButton}
-        />
+        <Text style={[styles.fieldLabel, { color: colors.text }]}>Date *</Text>
+        <TouchableOpacity
+          style={[styles.pickerButton, { borderColor: colors.surfaceVariant, backgroundColor: colors.surface }]}
+          onPress={() => {
+            setTempDate(date ? new Date(date + 'T00:00:00') : new Date());
+            setShowDatePicker(true);
+          }}
+        >
+          <Ionicons name="calendar-outline" size={18} color={colors.primary} />
+          <Text style={[styles.pickerButtonText, { color: date ? colors.text : colors.textMuted }]}>
+            {date ? formatDateDisplay(date) : 'Select date'}
+          </Text>
+          <Ionicons name="chevron-down" size={16} color={colors.textMuted} />
+        </TouchableOpacity>
+
+        {showDatePicker && RNPlatform.OS === 'android' && (
+          <DateTimePicker
+            value={tempDate}
+            mode="date"
+            display="default"
+            minimumDate={new Date()}
+            onChange={onDateChange}
+          />
+        )}
+
+        {showDatePicker && RNPlatform.OS === 'ios' && (
+          <Card style={styles.iosPickerCard}>
+            <DateTimePicker
+              value={tempDate}
+              mode="date"
+              display="spinner"
+              minimumDate={new Date()}
+              onChange={onDateChange}
+              textColor={colors.text}
+            />
+            <Button title="Confirm Date" onPress={confirmDate} fullWidth={false} style={styles.iosConfirmButton} />
+          </Card>
+        )}
+
+        <Text style={[styles.fieldLabel, { color: colors.text }]}>Time *</Text>
+        <TouchableOpacity
+          style={[styles.pickerButton, { borderColor: colors.surfaceVariant, backgroundColor: colors.surface }]}
+          onPress={() => {
+            const [h, m] = (time || '12:00').split(':');
+            const d = new Date();
+            d.setHours(parseInt(h), parseInt(m));
+            setTempTime(d);
+            setShowTimePicker(true);
+          }}
+        >
+          <Ionicons name="time-outline" size={18} color={colors.primary} />
+          <Text style={[styles.pickerButtonText, { color: time ? colors.text : colors.textMuted }]}>
+            {time ? formatTimeDisplay(time) : 'Select time'}
+          </Text>
+          <Ionicons name="chevron-down" size={16} color={colors.textMuted} />
+        </TouchableOpacity>
+
+        {showTimePicker && RNPlatform.OS === 'android' && (
+          <DateTimePicker
+            value={tempTime}
+            mode="time"
+            display="default"
+            onChange={onTimeChange}
+          />
+        )}
+
+        {showTimePicker && RNPlatform.OS === 'ios' && (
+          <Card style={styles.iosPickerCard}>
+            <DateTimePicker
+              value={tempTime}
+              mode="time"
+              display="spinner"
+              onChange={onTimeChange}
+              textColor={colors.text}
+            />
+            <Button title="Confirm Time" onPress={confirmTime} fullWidth={false} style={styles.iosConfirmButton} />
+          </Card>
+        )}
+
+        <Input label="Location *" value={location} onChangeText={setLocation} placeholder="e.g., Online / Dhaka Cyber Arena" />
+        <Input label={`Entry Fee (${CURRENCY_SYMBOL}) *`} value={price} onChangeText={setPrice} placeholder="0" keyboardType="numeric" />
+        <Input label="Max Slots *" value={maxSlots} onChangeText={setMaxSlots} placeholder="50" keyboardType="numeric" />
+
+        <Button title="Create Event" onPress={handleCreate} loading={loading} style={styles.createButton} />
       </Card>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    padding: Spacing.xl,
-    paddingBottom: Spacing.md,
-  },
-  title: {
-    fontSize: FontSize.hero,
-    fontWeight: '900',
-  },
-  subtitle: {
-    fontSize: FontSize.body,
-    marginTop: Spacing.xs,
-  },
-  form: {
-    margin: Spacing.xl,
-    marginTop: 0,
-  },
-  sectionLabel: {
-    fontSize: FontSize.bodyLg,
-    fontWeight: '800',
-    marginBottom: Spacing.md,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  subLabel: {
-    fontSize: FontSize.body,
-    fontWeight: '700',
-    marginRight: Spacing.md,
-  },
-  gameTypeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  gameTypeButton: {
-    width: '30%',
-    padding: Spacing.md,
-    borderRadius: BorderRadius.standard,
-    borderWidth: 2,
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  gameTypeIcon: {
-    fontSize: 28,
-    marginBottom: Spacing.sm,
-  },
-  gameTypeLabel: {
-    fontSize: FontSize.label,
-    fontWeight: '700',
-  },
-  modeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    marginBottom: Spacing.lg,
-  },
-  modeButton: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.metric,
-    borderWidth: 1,
-    marginRight: Spacing.md,
-    marginBottom: Spacing.sm,
-  },
-  modeLabel: {
-    fontSize: FontSize.label,
-    fontWeight: '700',
-  },
-  row: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-  },
-  halfInput: {
-    flex: 1,
-  },
-  createButton: {
-    marginTop: Spacing.md,
-  },
+  container: { flex: 1 },
+  header: { padding: Spacing.xl, paddingBottom: Spacing.md },
+  title: { fontSize: FontSize.hero, fontWeight: '900' },
+  subtitle: { fontSize: FontSize.body, marginTop: Spacing.xs },
+  form: { margin: Spacing.xl, marginTop: 0 },
+  sectionLabel: { fontSize: FontSize.bodyLg, fontWeight: '800', marginBottom: Spacing.md, textTransform: 'uppercase', letterSpacing: 0.5 },
+  subLabel: { fontSize: FontSize.body, fontWeight: '700', marginRight: Spacing.md },
+  fieldLabel: { fontSize: FontSize.body, fontWeight: '700', marginBottom: Spacing.md, marginTop: Spacing.lg },
+  gameTypeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md, marginBottom: Spacing.lg },
+  gameTypeButton: { width: '30%', padding: Spacing.md, borderRadius: BorderRadius.standard, borderWidth: 2, alignItems: 'center', marginBottom: Spacing.md },
+  gameTypeLabel: { fontSize: FontSize.label, fontWeight: '700', marginTop: Spacing.xs },
+  modeRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', marginBottom: Spacing.lg },
+  modeButton: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm, borderRadius: BorderRadius.metric, borderWidth: 1, marginRight: Spacing.md, marginBottom: Spacing.sm },
+  modeLabel: { fontSize: FontSize.label, fontWeight: '700' },
+  row: { flexDirection: 'row', gap: Spacing.md },
+  halfInput: { flex: 1 },
+  pickerButton: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderRadius: BorderRadius.standard, paddingHorizontal: Spacing.xl, paddingVertical: Spacing.lg, marginBottom: Spacing.md },
+  pickerButtonText: { flex: 1, fontSize: FontSize.body, marginLeft: Spacing.md },
+  iosPickerCard: { alignItems: 'center', marginBottom: Spacing.md },
+  iosConfirmButton: { marginTop: Spacing.md },
+  createButton: { marginTop: Spacing.md },
 });

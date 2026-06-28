@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { Spacing, FontSize, BorderRadius } from '../../constants';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
@@ -13,6 +14,7 @@ import { useTheme } from '../../theme/ThemeContext';
 type AuthStackParamList = {
   Login: undefined;
   Signup: undefined;
+  ForgotPassword: undefined;
 };
 
 interface LoginScreenProps {
@@ -30,7 +32,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
-
     const success = await signIn(email.trim(), password);
     if (!success && error) {
       Alert.alert('Login Failed', error);
@@ -40,36 +41,23 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
             <Logo size={100} />
             <Text style={[styles.title, { color: colors.text }]}>PlayRegister</Text>
-            <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              Sign in to continue
-            </Text>
+            <Text style={[styles.subtitle, { color: colors.textMuted }]}>Sign in to continue</Text>
           </View>
 
           <Card variant="auth" style={styles.formCard}>
-            <LinearGradient
-              colors={[
-                colors.primary + '0A',
-                colors.secondary + '0A',
-              ]}
-              style={styles.gradientOverlay}
-            >
+            <LinearGradient colors={[colors.primary + '0A', colors.secondary + '0A']} style={styles.gradientOverlay}>
               <Input
                 label="Email"
                 value={email}
                 onChangeText={setEmail}
                 placeholder="Enter your email"
                 keyboardType="email-address"
+                leadingIcon={<Ionicons name="mail-outline" size={18} color={colors.textMuted} />}
               />
               <Input
                 label="Password"
@@ -77,19 +65,23 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                 onChangeText={setPassword}
                 placeholder="Enter your password"
                 secureTextEntry
+                leadingIcon={<Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />}
               />
 
-              <Button
-                title="Sign In"
-                onPress={handleLogin}
-                loading={loading}
-                style={styles.loginButton}
-              />
+              <Button title="Sign In" onPress={handleLogin} loading={loading} style={styles.loginButton} />
+
+              <View style={styles.forgotPasswordRow}>
+                <Button
+                  title="Forgot Password?"
+                  onPress={() => navigation.navigate('ForgotPassword')}
+                  variant="text"
+                  fullWidth={false}
+                  textStyle={styles.forgotPasswordLink}
+                />
+              </View>
 
               <View style={styles.footer}>
-                <Text style={[styles.footerText, { color: colors.textMuted }]}>
-                  Don't have an account?{' '}
-                </Text>
+                <Text style={[styles.footerText, { color: colors.textMuted }]}>Don't have an account?{' '}</Text>
                 <Button
                   title="Sign Up"
                   onPress={() => navigation.navigate('Signup')}
@@ -107,52 +99,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: Spacing.xxl,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: Spacing.xxxl * 2,
-  },
-  title: {
-    fontSize: FontSize.display,
-    fontWeight: '900',
-    marginBottom: Spacing.md,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  subtitle: {
-    fontSize: FontSize.bodyLg,
-  },
-  formCard: {
-    overflow: 'hidden',
-  },
-  gradientOverlay: {
-    margin: -Spacing.hero,
-    padding: Spacing.hero,
-  },
-  loginButton: {
-    marginTop: Spacing.md,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: Spacing.xxl,
-  },
-  footerText: {
-    fontSize: FontSize.body,
-  },
-  signupLink: {
-    fontSize: FontSize.body,
-    textTransform: 'none',
-    letterSpacing: 0,
-    paddingVertical: 0,
-    minHeight: undefined,
-  },
+  container: { flex: 1 },
+  scrollContent: { flexGrow: 1, justifyContent: 'center', padding: Spacing.xxl },
+  header: { alignItems: 'center', marginBottom: Spacing.xxxl * 2 },
+  title: { fontSize: FontSize.display, fontWeight: '900', marginBottom: Spacing.md, textTransform: 'uppercase', letterSpacing: 1 },
+  subtitle: { fontSize: FontSize.bodyLg },
+  formCard: { overflow: 'hidden' },
+  gradientOverlay: { margin: -Spacing.hero, padding: Spacing.hero },
+  loginButton: { marginTop: Spacing.md },
+  forgotPasswordRow: { alignItems: 'flex-end', marginTop: Spacing.md },
+  forgotPasswordLink: { fontSize: FontSize.body, textTransform: 'none', letterSpacing: 0, paddingVertical: 0, minHeight: undefined },
+  footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: Spacing.xxl },
+  footerText: { fontSize: FontSize.body },
+  signupLink: { fontSize: FontSize.body, textTransform: 'none', letterSpacing: 0, paddingVertical: 0, minHeight: undefined },
 });

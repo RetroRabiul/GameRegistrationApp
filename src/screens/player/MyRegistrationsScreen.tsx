@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, Alert, RefreshControl } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Spacing, FontSize, BorderRadius } from '../../constants';
+import { Ionicons } from '@expo/vector-icons';
+import { Spacing, FontSize, BorderRadius, CURRENCY_SYMBOL } from '../../constants';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { useRegistrationStore } from '../../store/registrationStore';
 import { useTheme } from '../../theme/ThemeContext';
-import { Registration } from '../../types';
 import { MainStackParamList } from '../../navigation/MainNavigator';
 
 export const MyRegistrationsScreen: React.FC = () => {
@@ -51,11 +51,7 @@ export const MyRegistrationsScreen: React.FC = () => {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   const getPaymentStatusColor = (status: string) => {
@@ -83,7 +79,10 @@ export const MyRegistrationsScreen: React.FC = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>My Registrations</Text>
+        <View style={styles.headerRow}>
+          <Ionicons name="ticket-outline" size={28} color={colors.primary} />
+          <Text style={[styles.title, { color: colors.text }]}>My Registrations</Text>
+        </View>
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>
           {registrations.length} registrations
         </Text>
@@ -92,10 +91,8 @@ export const MyRegistrationsScreen: React.FC = () => {
       {registrations.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Card style={styles.emptyCard}>
-            <Text style={[styles.emptyIcon, { color: colors.textMuted }]}>⊕</Text>
-            <Text style={[styles.emptyText, { color: colors.text }]}>
-              No registrations yet
-            </Text>
+            <Ionicons name="ticket-outline" size={48} color={colors.textMuted} />
+            <Text style={[styles.emptyText, { color: colors.text }]}>No registrations yet</Text>
             <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
               Register for an event to see it here
             </Text>
@@ -109,27 +106,16 @@ export const MyRegistrationsScreen: React.FC = () => {
             return (
               <Card style={styles.card}>
                 <View style={styles.cardHeader}>
-                  <Text
-                    style={[styles.eventTitle, { color: colors.text }]}
-                    numberOfLines={1}
-                  >
+                  <Text style={[styles.eventTitle, { color: colors.text }]} numberOfLines={1}>
                     {event?.title || 'Unknown Event'}
                   </Text>
                   <View
                     style={[
                       styles.regStatusBadge,
-                      {
-                        backgroundColor: getRegistrationStatusColor(item.status) + '15',
-                        borderColor: getRegistrationStatusColor(item.status),
-                      },
+                      { backgroundColor: getRegistrationStatusColor(item.status) + '15', borderColor: getRegistrationStatusColor(item.status) },
                     ]}
                   >
-                    <Text
-                      style={[
-                        styles.regStatusText,
-                        { color: getRegistrationStatusColor(item.status) },
-                      ]}
-                    >
+                    <Text style={[styles.regStatusText, { color: getRegistrationStatusColor(item.status) }]}>
                       {item.status}
                     </Text>
                   </View>
@@ -138,18 +124,21 @@ export const MyRegistrationsScreen: React.FC = () => {
                 {event && (
                   <>
                     <View style={styles.detailRow}>
+                      <Ionicons name="calendar-outline" size={14} color={colors.textMuted} />
                       <Text style={[styles.detailText, { color: colors.textMuted }]}>
                         {formatDate(event.date)} at {event.time?.substring(0, 5)}
                       </Text>
                     </View>
                     <View style={styles.detailRow}>
+                      <Ionicons name="location-outline" size={14} color={colors.textMuted} />
                       <Text style={[styles.detailText, { color: colors.textMuted }]}>
                         {event.location}
                       </Text>
                     </View>
                     <View style={styles.detailRow}>
+                      <Ionicons name="pricetag-outline" size={14} color={colors.primary} />
                       <Text style={[styles.detailText, { color: colors.primary, fontWeight: '700' }]}>
-                        ৳{event.price}
+                        {CURRENCY_SYMBOL}{event.price}
                       </Text>
                     </View>
                   </>
@@ -161,18 +150,10 @@ export const MyRegistrationsScreen: React.FC = () => {
                     <View
                       style={[
                         styles.paymentBadge,
-                        {
-                          backgroundColor: getPaymentStatusColor(item.payment_status) + '15',
-                          borderColor: getPaymentStatusColor(item.payment_status),
-                        },
+                        { backgroundColor: getPaymentStatusColor(item.payment_status) + '15', borderColor: getPaymentStatusColor(item.payment_status) },
                       ]}
                     >
-                      <Text
-                        style={[
-                          styles.paymentStatusText,
-                          { color: getPaymentStatusColor(item.payment_status) },
-                        ]}
-                      >
+                      <Text style={[styles.paymentStatusText, { color: getPaymentStatusColor(item.payment_status) }]}>
                         {item.payment_status}
                       </Text>
                     </View>
@@ -209,11 +190,7 @@ export const MyRegistrationsScreen: React.FC = () => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={colors.primary}
-            />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
           }
         />
       )}
@@ -222,118 +199,29 @@ export const MyRegistrationsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    padding: Spacing.xl,
-    paddingBottom: Spacing.md,
-  },
-  title: {
-    fontSize: FontSize.hero,
-    fontWeight: '900',
-  },
-  subtitle: {
-    fontSize: FontSize.body,
-    marginTop: Spacing.xs,
-  },
-  listContent: {
-    padding: Spacing.xl,
-    paddingTop: 0,
-  },
-  card: {
-    marginBottom: Spacing.xl,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  eventTitle: {
-    fontSize: FontSize.cardTitle,
-    fontWeight: '700',
-    flex: 1,
-    marginRight: Spacing.md,
-  },
-  regStatusBadge: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.metric,
-    borderWidth: 1,
-  },
-  regStatusText: {
-    fontSize: FontSize.label,
-    fontWeight: '700',
-    textTransform: 'capitalize',
-  },
-  detailRow: {
-    marginBottom: Spacing.xs,
-  },
-  detailText: {
-    fontSize: FontSize.body,
-  },
-  paymentRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    paddingTop: Spacing.md,
-    marginTop: Spacing.md,
-  },
-  paymentStatusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  paymentLabel: {
-    fontSize: FontSize.body,
-    marginRight: Spacing.md,
-  },
-  paymentBadge: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.metric,
-    borderWidth: 1,
-  },
-  paymentStatusText: {
-    fontSize: FontSize.label,
-    fontWeight: '700',
-    textTransform: 'capitalize',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-  },
-  payButton: {
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
-    minHeight: 36,
-  },
-  cancelButton: {
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
-    minHeight: 36,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: Spacing.xl,
-  },
-  emptyCard: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xxxl * 2,
-  },
-  emptyIcon: {
-    fontSize: 48,
-    marginBottom: Spacing.xl,
-  },
-  emptyText: {
-    fontSize: FontSize.bodyLg,
-    fontWeight: '700',
-    marginBottom: Spacing.md,
-  },
-  emptySubtext: {
-    fontSize: FontSize.body,
-  },
+  container: { flex: 1 },
+  header: { padding: Spacing.xl, paddingBottom: Spacing.md },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  title: { fontSize: FontSize.hero, fontWeight: '900' },
+  subtitle: { fontSize: FontSize.body, marginTop: Spacing.xs },
+  listContent: { padding: Spacing.xl, paddingTop: 0 },
+  card: { marginBottom: Spacing.xl },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md },
+  eventTitle: { fontSize: FontSize.cardTitle, fontWeight: '700', flex: 1, marginRight: Spacing.md },
+  regStatusBadge: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: BorderRadius.metric, borderWidth: 1 },
+  regStatusText: { fontSize: FontSize.label, fontWeight: '700', textTransform: 'capitalize' },
+  detailRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.xs },
+  detailText: { fontSize: FontSize.body },
+  paymentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, paddingTop: Spacing.md, marginTop: Spacing.md },
+  paymentStatusContainer: { flexDirection: 'row', alignItems: 'center' },
+  paymentLabel: { fontSize: FontSize.body, marginRight: Spacing.md },
+  paymentBadge: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: BorderRadius.metric, borderWidth: 1 },
+  paymentStatusText: { fontSize: FontSize.label, fontWeight: '700', textTransform: 'capitalize' },
+  actionButtons: { flexDirection: 'row', gap: Spacing.md },
+  payButton: { paddingVertical: Spacing.md, paddingHorizontal: Spacing.xl, minHeight: 36 },
+  cancelButton: { paddingVertical: Spacing.md, paddingHorizontal: Spacing.xl, minHeight: 36 },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.xl },
+  emptyCard: { alignItems: 'center', paddingVertical: Spacing.xxxl * 2 },
+  emptyText: { fontSize: FontSize.bodyLg, fontWeight: '700', marginBottom: Spacing.md, marginTop: Spacing.xl },
+  emptySubtext: { fontSize: FontSize.body, textAlign: 'center' },
 });
