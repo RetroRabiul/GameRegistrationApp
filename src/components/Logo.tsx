@@ -46,6 +46,10 @@ export const Logo: React.FC<LogoProps> = ({ size = 80, animated = true }) => {
   }, [animated]);
 
   const iconSize = size;
+  const archWidth = iconSize * 0.7;
+  const archHeight = iconSize * 0.8;
+  const pillarWidth = iconSize * 0.15;
+  const playSize = iconSize * 0.25;
 
   return (
     <Animated.View
@@ -58,11 +62,94 @@ export const Logo: React.FC<LogoProps> = ({ size = 80, animated = true }) => {
         },
       ]}
     >
-      <View style={[styles.background, { width: iconSize, height: iconSize, borderRadius: iconSize * 0.2 }]} />
-      <View style={[styles.shape, { width: iconSize * 0.7, height: iconSize * 0.7 }]}>
-        <View style={[styles.playTriangle, { borderLeftWidth: iconSize * 0.25 }]} />
+      {/* Gate arch */}
+      <View
+        style={[
+          styles.arch,
+          {
+            width: archWidth,
+            height: archHeight,
+            borderRadius: archWidth * 0.5,
+            borderBottomLeftRadius: 0,
+            borderBottomRightRadius: 0,
+            borderWidth: iconSize * 0.08,
+            borderColor: Colors.primary,
+            borderTopColor: Colors.primary,
+          },
+        ]}
+      />
+
+      {/* Left pillar */}
+      <View
+        style={[
+          styles.pillar,
+          {
+            width: pillarWidth,
+            height: iconSize * 0.5,
+            left: (iconSize - archWidth) / 2,
+            bottom: iconSize * 0.1,
+            backgroundColor: Colors.primary,
+            borderRadius: iconSize * 0.02,
+          },
+        ]}
+      />
+
+      {/* Right pillar */}
+      <View
+        style={[
+          styles.pillar,
+          {
+            width: pillarWidth,
+            height: iconSize * 0.5,
+            right: (iconSize - archWidth) / 2,
+            bottom: iconSize * 0.1,
+            backgroundColor: Colors.primary,
+            borderRadius: iconSize * 0.02,
+          },
+        ]}
+      />
+
+      {/* Play triangle in center */}
+      <View
+        style={[
+          styles.playContainer,
+          {
+            width: playSize,
+            height: playSize,
+          },
+        ]}
+      >
+        <View
+          style={[
+            styles.playTriangle,
+            {
+              borderLeftWidth: playSize * 0.4,
+              borderTopWidth: playSize * 0.5,
+              borderBottomWidth: playSize * 0.5,
+              borderTopColor: 'transparent',
+              borderBottomColor: 'transparent',
+              borderLeftColor: Colors.secondary,
+            },
+          ]}
+        />
       </View>
-      <View style={[styles.dot, { width: iconSize * 0.12, height: iconSize * 0.12, borderRadius: iconSize * 0.06 }]} />
+
+      {/* Glow effect */}
+      <Animated.View
+        style={[
+          styles.glow,
+          {
+            width: iconSize * 0.3,
+            height: iconSize * 0.3,
+            borderRadius: iconSize * 0.15,
+            backgroundColor: Colors.secondary,
+            opacity: glowAnim.interpolate({
+              inputRange: [0.5, 1],
+              outputRange: [0.2, 0.5],
+            }),
+          },
+        ]}
+      />
     </Animated.View>
   );
 };
@@ -72,32 +159,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  background: {
+  arch: {
     position: 'absolute',
-    backgroundColor: Colors.primary,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    transform: [{ rotate: '0deg' }],
+  },
+  pillar: {
+    position: 'absolute',
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 15,
-    elevation: 10,
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 6,
   },
-  shape: {
+  playContainer: {
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 2,
   },
   playTriangle: {
     width: 0,
     height: 0,
-    borderTopWidth: 15,
-    borderBottomWidth: 15,
-    borderTopColor: 'transparent',
-    borderBottomColor: 'transparent',
-    borderLeftColor: Colors.background,
+    marginLeft: 2,
   },
-  dot: {
+  glow: {
     position: 'absolute',
-    bottom: '15%',
-    right: '15%',
-    backgroundColor: Colors.secondary,
+    zIndex: 1,
   },
 });

@@ -45,7 +45,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
             <Logo size={100} />
-            <Text style={[styles.title, { color: colors.text }]}>PlayRegister</Text>
+            <Text style={[styles.title, { color: colors.text }]}>PlayGate</Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>Sign in to continue</Text>
           </View>
 

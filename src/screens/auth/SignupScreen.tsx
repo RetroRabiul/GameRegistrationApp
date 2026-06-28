@@ -59,7 +59,7 @@ export const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
             <Logo size={100} />
-            <Text style={[styles.title, { color: colors.text }]}>PlayRegister</Text>
+            <Text style={[styles.title, { color: colors.text }]}>PlayGate</Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>Create your account</Text>
           </View>
 
