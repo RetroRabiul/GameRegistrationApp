@@ -1,0 +1,20 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="#0A0E17"/>
+  
+  <!-- Gate arch -->
+  <path d="M 156 350 L 156 220 A 100 100 0 0 1 356 220 L 356 350" 
+        stroke="#00E5FF" stroke-width="24" fill="none" stroke-linecap="round"/>
+  
+  <!-- Left pillar -->
+  <rect x="144" y="350" width="24" height="80" rx="4" fill="#00E5FF"/>
+  
+  <!-- Right pillar -->
+  <rect x="344" y="350" width="24" height="80" rx="4" fill="#00E5FF"/>
+  
+  <!-- Play triangle -->
+  <polygon points="230,240 230,290 280,265" fill="#FF6D00"/>
+  
+  <!-- Glow effect -->
+  <circle cx="256" cy="265" r="30" fill="#FF6D00" opacity="0.3"/>
+</svg>
