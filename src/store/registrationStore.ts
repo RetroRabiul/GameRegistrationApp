@@ -12,6 +12,8 @@ interface RegistrationState {
   fetchAllRegistrations: () => Promise<void>;
   registerForEvent: (eventId: string) => Promise<{ success: boolean; registrationId?: string; slotNumber?: number | null; message?: string }>;
   cancelRegistration: (id: string) => Promise<boolean>;
+  submitTransactionId: (registrationId: string, transactionId: string) => Promise<{ success: boolean; message?: string }>;
+  adminVerifyPayment: (registrationId: string, action: 'approve' | 'reject') => Promise<{ success: boolean; message?: string }>;
   updatePaymentStatus: (registrationId: string, status: 'paid' | 'failed', paymentId?: string) => Promise<boolean>;
   getDashboardStats: () => Promise<DashboardStats>;
   clearError: () => void;
@@ -120,6 +122,53 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
     } catch (error: any) {
       set({ error: error.message, loading: false });
       return false;
+    }
+  },
+
+  submitTransactionId: async (registrationId, transactionId) => {
+    try {
+      set({ loading: true, error: null });
+      const { data, error } = await supabase.rpc('submit_payment_transaction', {
+        p_registration_id: registrationId,
+        p_transaction_id: transactionId,
+      });
+
+      if (error) throw error;
+
+      set({ loading: false });
+      await get().fetchMyRegistrations();
+
+      if (data?.success) {
+        return { success: true, message: data.message };
+      } else {
+        return { success: false, message: data?.error || 'Failed to submit transaction ID' };
+      }
+    } catch (error: any) {
+      set({ error: error.message, loading: false });
+      return { success: false, message: error.message };
+    }
+  },
+
+  adminVerifyPayment: async (registrationId, action) => {
+    try {
+      set({ loading: true, error: null });
+      const { data, error } = await supabase.rpc('admin_verify_payment', {
+        p_registration_id: registrationId,
+        p_action: action,
+      });
+
+      if (error) throw error;
+
+      set({ loading: false });
+
+      if (data?.success) {
+        return { success: true, message: data.message };
+      } else {
+        return { success: false, message: data?.error || 'Failed to verify payment' };
+      }
+    } catch (error: any) {
+      set({ error: error.message, loading: false });
+      return { success: false, message: error.message };
     }
   },
 

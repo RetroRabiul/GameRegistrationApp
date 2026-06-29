@@ -103,6 +103,8 @@ CREATE TABLE registrations (
   slot_number INTEGER,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled')),
   payment_status TEXT NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'failed', 'refunded')),
+  bkash_transaction_id TEXT,
+  bkash_submitted_at TIMESTAMPTZ,
   payment_id UUID,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(event_id, user_id)
@@ -278,6 +280,130 @@ $$;
 -- Grant execute permission to authenticated users
 GRANT EXECUTE ON FUNCTION register_for_event(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION register_for_event(UUID) TO anon;
+
+-- =============================================
+-- MANUAL PAYMENT: SUBMIT TRANSACTION ID
+-- Players submit their bKash transaction ID after paying manually
+-- =============================================
+
+CREATE OR REPLACE FUNCTION submit_payment_transaction(
+  p_registration_id UUID,
+  p_transaction_id TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_registration RECORD;
+  v_user_id UUID;
+BEGIN
+  v_user_id := auth.uid();
+  IF v_user_id IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Not authenticated');
+  END IF;
+
+  -- Get the registration
+  SELECT * INTO v_registration FROM registrations WHERE id = p_registration_id;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Registration not found');
+  END IF;
+
+  -- Only the owner can submit payment
+  IF v_registration.user_id != v_user_id THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Not authorized');
+  END IF;
+
+  -- Check if already paid
+  IF v_registration.payment_status = 'paid' THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Payment already completed');
+  END IF;
+
+  -- Check if cancelled
+  IF v_registration.status = 'cancelled' THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Registration is cancelled');
+  END IF;
+
+  -- Validate transaction ID format (basic check)
+  IF length(p_transaction_id) < 10 THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Invalid transaction ID format');
+  END IF;
+
+  -- Update registration with transaction ID
+  UPDATE registrations
+  SET bkash_transaction_id = p_transaction_id,
+      bkash_submitted_at = NOW(),
+      payment_status = 'pending'
+  WHERE id = p_registration_id;
+
+  RETURN jsonb_build_object('success', true, 'message', 'Transaction ID submitted. Awaiting admin verification.');
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION submit_payment_transaction(UUID, TEXT) TO authenticated;
+
+-- =============================================
+-- MANUAL PAYMENT: ADMIN VERIFY
+-- Admin verifies and approves the payment
+-- =============================================
+
+CREATE OR REPLACE FUNCTION admin_verify_payment(
+  p_registration_id UUID,
+  p_action TEXT
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_registration RECORD;
+  v_admin_id UUID;
+BEGIN
+  v_admin_id := auth.uid();
+  IF v_admin_id IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Not authenticated');
+  END IF;
+
+  -- Check if admin
+  IF NOT is_admin() THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Admin access required');
+  END IF;
+
+  -- Get the registration
+  SELECT * INTO v_registration FROM registrations WHERE id = p_registration_id;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Registration not found');
+  END IF;
+
+  -- Only process pending payments
+  IF v_registration.payment_status != 'pending' THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Payment is not pending');
+  END IF;
+
+  IF p_action = 'approve' THEN
+    -- Approve payment
+    UPDATE registrations
+    SET payment_status = 'paid',
+        status = 'confirmed'
+    WHERE id = p_registration_id;
+
+    RETURN jsonb_build_object('success', true, 'message', 'Payment approved');
+  ELSIF p_action = 'reject' THEN
+    -- Reject payment
+    UPDATE registrations
+    SET payment_status = 'failed'
+    WHERE id = p_registration_id;
+
+    RETURN jsonb_build_object('success', true, 'message', 'Payment rejected');
+  ELSE
+    RETURN jsonb_build_object('success', false, 'error', 'Invalid action. Use approve or reject');
+  END IF;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION admin_verify_payment(UUID, TEXT) TO authenticated;
 
 -- Decrement filled_slots on registration cancellation
 CREATE OR REPLACE FUNCTION decrement_filled_slots()

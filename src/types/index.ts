@@ -41,6 +41,8 @@ export interface Registration {
   slot_number: number | null;
   status: 'pending' | 'confirmed' | 'cancelled';
   payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
+  bkash_transaction_id?: string | null;
+  bkash_submitted_at?: string | null;
   payment_id?: string;
   created_at: string;
   event?: GameEvent;

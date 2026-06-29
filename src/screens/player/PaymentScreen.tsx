@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Alert, ScrollView, Linking } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { Spacing, FontSize, BorderRadius } from '../../constants';
+import { Ionicons } from '@expo/vector-icons';
+import { Spacing, FontSize, BorderRadius, CURRENCY_SYMBOL } from '../../constants';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { Card } from '../../components/Card';
-import { bkashService } from '../../lib/bkash';
 import { useRegistrationStore } from '../../store/registrationStore';
 import { useTheme } from '../../theme/ThemeContext';
-import { GameEvent } from '../../types';
 import { MainStackParamList } from '../../navigation/MainNavigator';
 
 interface PaymentScreenProps {
@@ -19,66 +18,34 @@ interface PaymentScreenProps {
 
 export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route }) => {
   const { registrationId, amount, eventTitle } = route.params;
-  const { updatePaymentStatus } = useRegistrationStore();
+  const { submitTransactionId, loading } = useRegistrationStore();
   const { colors } = useTheme();
-  const [bkashNumber, setBkashNumber] = useState('');
-  const [processing, setProcessing] = useState(false);
-  const [step, setStep] = useState<'input' | 'otp'>('input');
-  const [otp, setOtp] = useState('');
-  const [paymentId, setPaymentId] = useState('');
+  const [transactionId, setTransactionId] = useState('');
 
-  const handleInitiatePayment = async () => {
-    if (!bkashNumber.trim() || bkashNumber.length < 11) {
-      Alert.alert('Error', 'Please enter a valid bKash number');
+  const handleSubmit = async () => {
+    if (!transactionId.trim() || transactionId.length < 10) {
+      Alert.alert('Error', 'Please enter a valid bKash transaction ID (at least 10 characters)');
       return;
     }
 
-    setProcessing(true);
-    const response = await bkashService.createPayment(amount, registrationId);
-    setProcessing(false);
+    const result = await submitTransactionId(registrationId, transactionId.trim());
 
-    if (response && response.paymentID) {
-      setPaymentId(response.paymentID);
-      setStep('otp');
+    if (result.success) {
       Alert.alert(
-        'bKash Payment Request Sent',
-        `A payment request of ৳${amount} has been sent to ${bkashNumber}.\n\nPlease check your bKash app and enter the OTP to confirm.`,
-      );
-    } else {
-      Alert.alert('Error', 'Failed to initiate payment. Please try again.');
-    }
-  };
-
-  const handleConfirmPayment = async () => {
-    if (!otp.trim()) {
-      Alert.alert('Error', 'Please enter the OTP');
-      return;
-    }
-
-    setProcessing(true);
-    const response = await bkashService.executePayment(paymentId);
-    setProcessing(false);
-
-    if (response && response.transactionID) {
-      await bkashService.recordPayment(
-        registrationId,
-        amount,
-        paymentId,
-        response.transactionID,
-        'completed'
-      );
-      await updatePaymentStatus(registrationId, 'paid');
-
-      Alert.alert(
-        'Payment Successful!',
-        `Your payment of ৳${amount} for "${eventTitle}" has been confirmed.\n\nTransaction ID: ${response.transactionID}`,
+        'Transaction ID Submitted!',
+        `${result.message}\n\nAn admin will verify your payment shortly. You will be notified once confirmed.`,
         [{ text: 'OK', onPress: () => navigation.goBack() }]
       );
     } else {
-      await bkashService.recordPayment(registrationId, amount, paymentId, '', 'failed');
-      await updatePaymentStatus(registrationId, 'failed');
-      Alert.alert('Payment Failed', 'Your payment could not be processed. Please try again.');
+      Alert.alert('Error', result.message || 'Failed to submit transaction ID');
     }
+  };
+
+  const openBkashApp = () => {
+    // Try to open bKash app (if installed)
+    Linking.openURL('bkash://').catch(() => {
+      Alert.alert('bKash App Not Found', 'Please open your bKash app manually and send payment to the merchant number provided by the event organizer.');
+    });
   };
 
   return (
@@ -87,10 +54,10 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.header}>
-        <Text style={[styles.logo, { color: colors.primary }]}>◈</Text>
-        <Text style={[styles.title, { color: colors.text }]}>bKash Payment</Text>
+        <Ionicons name="wallet-outline" size={48} color={colors.primary} />
+        <Text style={[styles.title, { color: colors.text }]}>Manual Payment</Text>
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-          Complete your registration payment
+          Pay via bKash and submit transaction ID
         </Text>
       </View>
 
@@ -104,69 +71,50 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({ navigation, route 
         ]}
       >
         <Text style={[styles.amountLabel, { color: colors.textMuted }]}>Amount to Pay</Text>
-        <Text style={[styles.amountValue, { color: colors.primary }]}>৳{amount}</Text>
+        <Text style={[styles.amountValue, { color: colors.primary }]}>{CURRENCY_SYMBOL}{amount}</Text>
         <Text style={[styles.eventName, { color: colors.textMuted }]}>For: {eventTitle}</Text>
       </View>
 
+      <Card style={styles.instructionsCard}>
+        <View style={styles.instructionHeader}>
+          <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
+          <Text style={[styles.instructionTitle, { color: colors.text }]}>Payment Instructions</Text>
+        </View>
+        <Text style={[styles.instructionText, { color: colors.textMuted }]}>
+          1. Open your bKash app{'\n'}
+          2. Send {CURRENCY_SYMBOL}{amount} to the merchant number provided by event organizer{'\n'}
+          3. Copy the Transaction ID from bKash{'\n'}
+          4. Paste it below and submit
+        </Text>
+        <Button
+          title="Open bKash App"
+          onPress={openBkashApp}
+          variant="secondary"
+          style={styles.openBkashButton}
+        />
+      </Card>
+
       <Card style={styles.form}>
-        {step === 'input' ? (
-          <>
-            <Input
-              label="bKash Number"
-              value={bkashNumber}
-              onChangeText={setBkashNumber}
-              placeholder="01XXXXXXXXX"
-              keyboardType="phone-pad"
-            />
-            <Button
-              title="Send Payment Request"
-              onPress={handleInitiatePayment}
-              loading={processing}
-              variant="secondary"
-            />
-          </>
-        ) : (
-          <>
-            <View
-              style={[
-                styles.infoBox,
-                {
-                  backgroundColor: colors.tertiary + '10',
-                  borderColor: colors.tertiary + '30',
-                },
-              ]}
-            >
-              <Text style={[styles.infoText, { color: colors.text }]}>
-                Payment request sent to {bkashNumber}{'\n'}
-                Check your bKash app and confirm the payment.
-              </Text>
-            </View>
-            <Input
-              label="Enter OTP"
-              value={otp}
-              onChangeText={setOtp}
-              placeholder="Enter OTP from bKash"
-              keyboardType="numeric"
-            />
-            <Button
-              title="Confirm Payment"
-              onPress={handleConfirmPayment}
-              loading={processing}
-              variant="secondary"
-            />
-            <Button
-              title="Cancel"
-              onPress={() => setStep('input')}
-              variant="outline"
-              style={styles.cancelButton}
-            />
-          </>
-        )}
+        <Input
+          label="bKash Transaction ID *"
+          value={transactionId}
+          onChangeText={setTransactionId}
+          placeholder="e.g., TXN1234567890"
+          leadingIcon={<Ionicons name="receipt-outline" size={18} color={colors.textMuted} />}
+        />
+
+        <Button
+          title="Submit Transaction ID"
+          onPress={handleSubmit}
+          loading={loading}
+          style={styles.submitButton}
+        />
       </Card>
 
       <View style={styles.footer}>
+        <Ionicons name="shield-checkmark-outline" size={16} color={colors.tertiary} />
         <Text style={[styles.footerText, { color: colors.textMuted }]}>
-          Your payment is processed securely via bKash.
+          {' '}Your payment will be verified by admin before confirmation
         </Text>
       </View>
     </ScrollView>
@@ -182,18 +130,15 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
     paddingBottom: Spacing.md,
   },
-  logo: {
-    fontSize: 48,
-    fontWeight: '700',
-    marginBottom: Spacing.md,
-  },
   title: {
     fontSize: FontSize.hero,
     fontWeight: '900',
     marginBottom: Spacing.xs,
+    marginTop: Spacing.md,
   },
   subtitle: {
     fontSize: FontSize.body,
+    textAlign: 'center',
   },
   amountCard: {
     margin: Spacing.xl,
@@ -213,26 +158,40 @@ const styles = StyleSheet.create({
   eventName: {
     fontSize: FontSize.body,
   },
+  instructionsCard: {
+    margin: Spacing.xl,
+    marginTop: 0,
+  },
+  instructionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  instructionTitle: {
+    fontSize: FontSize.cardTitle,
+    fontWeight: '700',
+  },
+  instructionText: {
+    fontSize: FontSize.body,
+    lineHeight: 22,
+    marginBottom: Spacing.lg,
+  },
+  openBkashButton: {
+    marginTop: Spacing.md,
+  },
   form: {
     margin: Spacing.xl,
     marginTop: 0,
   },
-  infoBox: {
-    borderRadius: BorderRadius.standard,
-    padding: Spacing.xl,
-    marginBottom: Spacing.xl,
-    borderWidth: 1,
-  },
-  infoText: {
-    fontSize: FontSize.body,
-    lineHeight: 22,
-  },
-  cancelButton: {
+  submitButton: {
     marginTop: Spacing.md,
   },
   footer: {
     padding: Spacing.xl,
     alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   footerText: {
     fontSize: FontSize.caption,

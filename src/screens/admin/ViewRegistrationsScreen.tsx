@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, FlatList, StyleSheet, RefreshControl, Alert, TouchableOpacity } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, FontSize, BorderRadius, CURRENCY_SYMBOL } from '../../constants';
@@ -17,7 +17,7 @@ interface ViewRegistrationsScreenProps {
 
 export const ViewRegistrationsScreen: React.FC<ViewRegistrationsScreenProps> = ({ route }) => {
   const { event } = route.params;
-  const { fetchEventRegistrations } = useRegistrationStore();
+  const { fetchEventRegistrations, adminVerifyPayment } = useRegistrationStore();
   const { colors } = useTheme();
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,6 +39,30 @@ export const ViewRegistrationsScreen: React.FC<ViewRegistrationsScreenProps> = (
     setRefreshing(true);
     await loadRegistrations();
     setRefreshing(false);
+  };
+
+  const handleVerifyPayment = (registrationId: string, action: 'approve' | 'reject') => {
+    const actionText = action === 'approve' ? 'approve' : 'reject';
+    Alert.alert(
+      `${actionText === 'approve' ? 'Approve' : 'Reject'} Payment?`,
+      `Are you sure you want to ${actionText} this payment?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: actionText === 'approve' ? 'Approve' : 'Reject',
+          style: action === 'approve' ? 'default' : 'destructive',
+          onPress: async () => {
+            const result = await adminVerifyPayment(registrationId, action);
+            if (result.success) {
+              Alert.alert('Success', result.message);
+              await loadRegistrations();
+            } else {
+              Alert.alert('Error', result.message);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const paidCount = registrations.filter(r => r.payment_status === 'paid').length;
@@ -132,6 +156,22 @@ export const ViewRegistrationsScreen: React.FC<ViewRegistrationsScreenProps> = (
                       </View>
                     </View>
                   )}
+                  {item.bkash_transaction_id && (
+                    <View style={styles.transactionRow}>
+                      <Ionicons name="receipt-outline" size={14} color={colors.textMuted} />
+                      <Text style={[styles.transactionText, { color: colors.text }]}>
+                        TXN: {item.bkash_transaction_id}
+                      </Text>
+                    </View>
+                  )}
+                  {item.bkash_submitted_at && (
+                    <View style={styles.detailRow}>
+                      <Ionicons name="time-outline" size={14} color={colors.textMuted} />
+                      <Text style={[styles.detailText, { color: colors.textMuted }]}>
+                        Submitted: {new Date(item.bkash_submitted_at).toLocaleString()}
+                      </Text>
+                    </View>
+                  )}
                   {profile?.phone && (
                     <View style={styles.detailRow}>
                       <Ionicons name="phone-portrait-outline" size={14} color={colors.textMuted} />
@@ -152,6 +192,27 @@ export const ViewRegistrationsScreen: React.FC<ViewRegistrationsScreenProps> = (
                       Entry Fee: {CURRENCY_SYMBOL}{event.price}
                     </Text>
                   </View>
+
+                  {item.payment_status === 'pending' && item.bkash_transaction_id && (
+                    <View style={styles.verifyButtons}>
+                      <TouchableOpacity
+                        style={[styles.verifyBtn, { backgroundColor: colors.tertiary + '20', borderColor: colors.tertiary }]}
+                        onPress={() => handleVerifyPayment(item.id, 'approve')}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="checkmark-circle-outline" size={16} color={colors.tertiary} />
+                        <Text style={[styles.verifyBtnText, { color: colors.tertiary }]}>Approve</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.verifyBtn, { backgroundColor: colors.error + '20', borderColor: colors.error }]}
+                        onPress={() => handleVerifyPayment(item.id, 'reject')}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="close-circle-outline" size={16} color={colors.error} />
+                        <Text style={[styles.verifyBtnText, { color: colors.error }]}>Reject</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </View>
               </Card>
             );
@@ -191,6 +252,11 @@ const styles = StyleSheet.create({
   slotBadgeRow: { marginBottom: Spacing.md },
   slotBadge: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: BorderRadius.metric, borderWidth: 1, alignSelf: 'flex-start' },
   slotBadgeText: { fontSize: FontSize.label, fontWeight: '700' },
+  transactionRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.xs, paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: BorderRadius.metric },
+  transactionText: { fontSize: FontSize.body, fontFamily: 'monospace' },
+  verifyButtons: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.md },
+  verifyBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.sm, paddingVertical: Spacing.md, borderRadius: BorderRadius.metric, borderWidth: 1 },
+  verifyBtnText: { fontSize: FontSize.label, fontWeight: '700' },
   detailRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.xs },
   detailText: { fontSize: FontSize.body },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.xl },
