@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { Registration, DashboardStats } from '../types';
+import { notificationService } from '../lib/notifications';
 
 interface RegistrationState {
   registrations: Registration[];
@@ -162,6 +163,14 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
       set({ loading: false });
 
       if (data?.success) {
+        // Send notification to player
+        const statusText = action === 'approve' ? 'approved' : 'rejected';
+        await notificationService.sendLocalNotification(
+          'Payment Update',
+          `Your payment has been ${statusText} by the admin.`,
+          { type: 'payment_update', action }
+        );
+        
         return { success: true, message: data.message };
       } else {
         return { success: false, message: data?.error || 'Failed to verify payment' };

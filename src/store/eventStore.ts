@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '../lib/supabase';
 import { GameEvent } from '../types';
+import { notificationService } from '../lib/notifications';
 
 interface EventState {
   events: GameEvent[];
@@ -63,6 +64,14 @@ export const useEventStore = create<EventState>((set, get) => ({
       if (error) throw error;
       set({ loading: false });
       await get().fetchEvents();
+      
+      // Send notification
+      await notificationService.sendLocalNotification(
+        'New Event Created!',
+        `${event.title} has been created. Check it out!`,
+        { type: 'event_created', eventId: event.title }
+      );
+      
       return true;
     } catch (error: any) {
       set({ error: error.message, loading: false });
@@ -81,6 +90,16 @@ export const useEventStore = create<EventState>((set, get) => ({
       if (error) throw error;
       set({ loading: false });
       await get().fetchEvents();
+      
+      // Send notification if status changed
+      if (updates.status) {
+        await notificationService.sendLocalNotification(
+          'Event Updated',
+          `Event status changed to ${updates.status}.`,
+          { type: 'event_updated', status: updates.status }
+        );
+      }
+      
       return true;
     } catch (error: any) {
       set({ error: error.message, loading: false });

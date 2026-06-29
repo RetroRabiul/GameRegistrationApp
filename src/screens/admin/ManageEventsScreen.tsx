@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Alert, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Alert, RefreshControl, TouchableOpacity, TextInput, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,11 +12,21 @@ import { useTheme } from '../../theme/ThemeContext';
 import { GameEvent } from '../../types';
 import { MainStackParamList } from '../../navigation/MainNavigator';
 
+const STATUS_FILTERS: { value: string; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'upcoming', label: 'Upcoming' },
+  { value: 'ongoing', label: 'Ongoing' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+
 export const ManageEventsScreen: React.FC = () => {
   const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const { events, loading, fetchEvents, deleteEvent } = useEventStore();
   const { colors } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   useEffect(() => {
     fetchEvents();
@@ -65,6 +75,16 @@ export const ManageEventsScreen: React.FC = () => {
     }
   };
 
+  const filteredEvents = events.filter(event => {
+    const matchesSearch = searchQuery === '' || 
+      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.location.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || event.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
   if (loading && events.length === 0) {
     return <LoadingSpinner />;
   }
@@ -75,7 +95,7 @@ export const ManageEventsScreen: React.FC = () => {
         <View>
           <Text style={[styles.title, { color: colors.text }]}>Manage Events</Text>
           <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            {events.length} total events
+            {filteredEvents.length} events
           </Text>
         </View>
         <Button
@@ -86,21 +106,75 @@ export const ManageEventsScreen: React.FC = () => {
         />
       </View>
 
-      {events.length === 0 ? (
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.surfaceVariant }]}>
+          <Ionicons name="search" size={20} color={colors.textMuted} />
+          <TextInput
+            style={[styles.searchInput, { color: colors.text }]}
+            placeholder="Search events..."
+            placeholderTextColor={colors.textMuted}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {/* Status Filter */}
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterContainer}
+        contentContainerStyle={styles.filterContent}
+      >
+        {STATUS_FILTERS.map((status) => (
+          <TouchableOpacity
+            key={status.value}
+            style={[
+              styles.filterChip,
+              {
+                borderColor: statusFilter === status.value ? colors.primary : colors.surfaceVariant,
+                backgroundColor: statusFilter === status.value ? colors.primary + '20' : colors.surface,
+              },
+            ]}
+            onPress={() => setStatusFilter(status.value)}
+          >
+            <Text
+              style={[
+                styles.filterText,
+                { color: statusFilter === status.value ? colors.primary : colors.textMuted },
+              ]}
+            >
+              {status.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {filteredEvents.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Card style={styles.emptyCard}>
             <Ionicons name="trophy-outline" size={48} color={colors.textMuted} />
-            <Text style={[styles.emptyText, { color: colors.text }]}>No events created yet</Text>
-            <Button
-              title="Create Your First Event"
-              onPress={() => navigation.navigate('CreateEvent')}
-              style={styles.emptyButton}
-            />
+            <Text style={[styles.emptyText, { color: colors.text }]}>
+              {searchQuery || statusFilter !== 'all' ? 'No events match your filters' : 'No events created yet'}
+            </Text>
+            {!searchQuery && statusFilter === 'all' && (
+              <Button
+                title="Create Your First Event"
+                onPress={() => navigation.navigate('CreateEvent')}
+                style={styles.emptyButton}
+              />
+            )}
           </Card>
         </View>
       ) : (
         <FlatList
-          data={events}
+          data={filteredEvents}
           renderItem={({ item }) => (
             <Card style={styles.card}>
               <View style={styles.cardHeader}>
@@ -188,6 +262,40 @@ const styles = StyleSheet.create({
   title: { fontSize: FontSize.hero, fontWeight: '900' },
   subtitle: { fontSize: FontSize.body, marginTop: Spacing.xs },
   createButton: { paddingVertical: Spacing.md, paddingHorizontal: Spacing.xl, minHeight: 40 },
+  searchContainer: {
+    paddingHorizontal: Spacing.xl,
+    marginBottom: Spacing.md,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: BorderRadius.standard,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    gap: Spacing.md,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: FontSize.body,
+  },
+  filterContainer: {
+    maxHeight: 50,
+  },
+  filterContent: {
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.md,
+  },
+  filterChip: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.metric,
+    borderWidth: 1,
+  },
+  filterText: {
+    fontSize: FontSize.caption,
+    fontWeight: '700',
+  },
   listContent: { padding: Spacing.xl, paddingTop: 0 },
   card: { marginBottom: Spacing.xl },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: Spacing.md },

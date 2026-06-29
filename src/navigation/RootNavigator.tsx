@@ -4,6 +4,7 @@ import { AuthNavigator } from './AuthNavigator';
 import { MainNavigator } from './MainNavigator';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useTheme } from '../theme/ThemeContext';
+import { notificationService } from '../lib/notifications';
 
 export const RootNavigator: React.FC = () => {
   const { user, loading, initialize } = useAuthStore();
@@ -11,6 +12,8 @@ export const RootNavigator: React.FC = () => {
 
   useEffect(() => {
     initialize();
+    // Request notification permissions
+    notificationService.requestPermissions();
   }, []);
 
   if (loading) {
