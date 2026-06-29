@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Alert, RefreshControl } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Alert, RefreshControl, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, FontSize, BorderRadius, CURRENCY_SYMBOL } from '../../constants';
-import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { useRegistrationStore } from '../../store/registrationStore';
@@ -169,26 +168,29 @@ export const MyRegistrationsScreen: React.FC = () => {
 
                   <View style={styles.actionButtons}>
                     {item.status !== 'cancelled' && item.payment_status === 'pending' && event && (
-                      <Button
-                        title="Pay Now"
+                      <TouchableOpacity
+                        style={[styles.actionBtn, { borderColor: colors.primary + '40', backgroundColor: colors.primary + '10' }]}
                         onPress={() => navigation.navigate('Payment', {
                           eventId: event.id,
                           registrationId: item.id,
                           amount: event.price,
                           eventTitle: event.title,
                         })}
-                        fullWidth={false}
-                        style={styles.payButton}
-                      />
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="card-outline" size={14} color={colors.primary} />
+                        <Text style={[styles.actionBtnText, { color: colors.primary }]}>Pay</Text>
+                      </TouchableOpacity>
                     )}
                     {item.status !== 'cancelled' && (
-                      <Button
-                        title="Cancel"
+                      <TouchableOpacity
+                        style={[styles.actionBtn, { borderColor: colors.error + '40', backgroundColor: colors.error + '10' }]}
                         onPress={() => handleCancel(item.id, event?.title || '')}
-                        variant="danger"
-                        fullWidth={false}
-                        style={styles.cancelButton}
-                      />
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="close-circle-outline" size={14} color={colors.error} />
+                        <Text style={[styles.actionBtnText, { color: colors.error }]}>Cancel</Text>
+                      </TouchableOpacity>
                     )}
                   </View>
                 </View>
@@ -228,8 +230,8 @@ const styles = StyleSheet.create({
   paymentBadge: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: BorderRadius.metric, borderWidth: 1 },
   paymentStatusText: { fontSize: FontSize.label, fontWeight: '700', textTransform: 'capitalize' },
   actionButtons: { flexDirection: 'row', gap: Spacing.md },
-  payButton: { paddingVertical: Spacing.md, paddingHorizontal: Spacing.xl, minHeight: 36 },
-  cancelButton: { paddingVertical: Spacing.md, paddingHorizontal: Spacing.xl, minHeight: 36 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.xl, paddingVertical: Spacing.md, borderRadius: BorderRadius.metric, borderWidth: 1, gap: Spacing.sm },
+  actionBtnText: { fontSize: FontSize.caption, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.xl },
   emptyCard: { alignItems: 'center', paddingVertical: Spacing.xxxl * 2 },
   emptyText: { fontSize: FontSize.bodyLg, fontWeight: '700', marginBottom: Spacing.md, marginTop: Spacing.xl },
