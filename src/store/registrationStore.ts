@@ -10,7 +10,7 @@ interface RegistrationState {
   fetchMyRegistrations: () => Promise<void>;
   fetchEventRegistrations: (eventId: string) => Promise<Registration[]>;
   fetchAllRegistrations: () => Promise<void>;
-  registerForEvent: (eventId: string) => Promise<{ success: boolean; registrationId?: string }>;
+  registerForEvent: (eventId: string) => Promise<{ success: boolean; registrationId?: string; slotNumber?: number | null; message?: string }>;
   cancelRegistration: (id: string) => Promise<boolean>;
   updatePaymentStatus: (registrationId: string, status: 'paid' | 'failed', paymentId?: string) => Promise<boolean>;
   getDashboardStats: () => Promise<DashboardStats>;
@@ -48,7 +48,7 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
         .from('registrations')
         .select('*, profile:profiles(*), event:events(*)')
         .eq('event_id', eventId)
-        .order('created_at', { ascending: false });
+        .order('slot_number', { ascending: true, nullsFirst: false });
 
       if (error) throw error;
       return (data as Registration[]) || [];
@@ -79,26 +79,29 @@ export const useRegistrationStore = create<RegistrationState>((set, get) => ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data, error } = await supabase
-        .from('registrations')
-        .insert({
-          event_id: eventId,
-          user_id: user.id,
-          status: 'pending',
-          payment_status: 'pending',
-        })
-        .select()
-        .single();
+      const { data, error } = await supabase.rpc('register_for_event', {
+        p_event_id: eventId,
+      });
 
       if (error) throw error;
 
-      const registration = data as Registration;
+      if (!data?.success) {
+        set({ error: data?.error || 'Registration failed', loading: false });
+        return { success: false, message: data?.error };
+      }
+
+      const registration = data.registration as Registration;
       set({ loading: false });
       await get().fetchMyRegistrations();
-      return { success: true, registrationId: registration.id };
+      return {
+        success: true,
+        registrationId: registration.id,
+        slotNumber: registration.slot_number,
+        message: `You got Slot #${registration.slot_number}!`,
+      };
     } catch (error: any) {
       set({ error: error.message, loading: false });
-      return { success: false };
+      return { success: false, message: error.message };
     }
   },
 

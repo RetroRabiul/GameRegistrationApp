@@ -38,6 +38,7 @@ export interface Registration {
   id: string;
   event_id: string;
   user_id: string;
+  slot_number: number | null;
   status: 'pending' | 'confirmed' | 'cancelled';
   payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
   payment_id?: string;

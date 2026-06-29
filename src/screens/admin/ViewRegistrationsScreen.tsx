@@ -30,7 +30,8 @@ export const ViewRegistrationsScreen: React.FC<ViewRegistrationsScreenProps> = (
   const loadRegistrations = async () => {
     setLoading(true);
     const data = await fetchEventRegistrations(event.id);
-    setRegistrations(data);
+    const sorted = [...data].sort((a, b) => (a.slot_number ?? 999) - (b.slot_number ?? 999));
+    setRegistrations(sorted);
     setLoading(false);
   };
 
@@ -121,6 +122,16 @@ export const ViewRegistrationsScreen: React.FC<ViewRegistrationsScreenProps> = (
                 </View>
 
                 <View style={[styles.cardDetails, { borderTopColor: colors.surfaceVariant }]}>
+                  {item.slot_number != null && (
+                    <View style={styles.slotBadgeRow}>
+                      <View style={[styles.slotBadge, { backgroundColor: colors.primary + '15', borderColor: colors.primary }]}>
+                        <Ionicons name="grid-outline" size={14} color={colors.primary} />
+                        <Text style={[styles.slotBadgeText, { color: colors.primary }]}>
+                          Slot #{item.slot_number}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
                   {profile?.phone && (
                     <View style={styles.detailRow}>
                       <Ionicons name="phone-portrait-outline" size={14} color={colors.textMuted} />
@@ -177,6 +188,9 @@ const styles = StyleSheet.create({
   paymentBadge: { paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: BorderRadius.metric, borderWidth: 1 },
   paymentText: { fontSize: FontSize.label, fontWeight: '700', textTransform: 'capitalize' },
   cardDetails: { borderTopWidth: 1, paddingTop: Spacing.md },
+  slotBadgeRow: { marginBottom: Spacing.md },
+  slotBadge: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: BorderRadius.metric, borderWidth: 1, alignSelf: 'flex-start' },
+  slotBadgeText: { fontSize: FontSize.label, fontWeight: '700' },
   detailRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.xs },
   detailText: { fontSize: FontSize.body },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.xl },

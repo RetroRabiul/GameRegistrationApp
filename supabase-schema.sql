@@ -100,6 +100,7 @@ CREATE TABLE registrations (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   event_id UUID REFERENCES events(id) ON DELETE CASCADE NOT NULL,
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  slot_number INTEGER,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled')),
   payment_status TEXT NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'failed', 'refunded')),
   payment_id UUID,
@@ -201,21 +202,82 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
 
--- Increment filled_slots on registration
-CREATE OR REPLACE FUNCTION increment_filled_slots()
-RETURNS TRIGGER AS $$
-BEGIN
-  UPDATE events
-  SET filled_slots = filled_slots + 1
-  WHERE id = NEW.event_id;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+-- =============================================
+-- ATOMIC REGISTRATION WITH AUTO SLOT ASSIGNMENT
+-- Players call this RPC function to register.
+-- It atomically: checks slots, assigns slot_number, inserts registration.
+-- Prevents race conditions when multiple users register simultaneously.
+-- =============================================
 
-DROP TRIGGER IF EXISTS on_registration_created ON registrations;
-CREATE TRIGGER on_registration_created
-  AFTER INSERT ON registrations
-  FOR EACH ROW EXECUTE FUNCTION increment_filled_slots();
+CREATE OR REPLACE FUNCTION register_for_event(p_event_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_event RECORD;
+  v_user_id UUID;
+  v_existing_registration UUID;
+  v_slot_number INTEGER;
+  v_registration JSONB;
+BEGIN
+  -- Get the current user
+  v_user_id := auth.uid();
+  IF v_user_id IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Not authenticated');
+  END IF;
+
+  -- Lock the event row to prevent race conditions
+  SELECT * INTO v_event FROM events WHERE id = p_event_id FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Event not found');
+  END IF;
+
+  IF v_event.status != 'upcoming' THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Event is not accepting registrations');
+  END IF;
+
+  -- Check if user already registered (excluding cancelled)
+  SELECT id INTO v_existing_registration
+  FROM registrations
+  WHERE event_id = p_event_id AND user_id = v_user_id AND status != 'cancelled';
+
+  IF FOUND THEN
+    RETURN jsonb_build_object('success', false, 'error', 'You are already registered for this event');
+  END IF;
+
+  -- Check if slots are available
+  IF v_event.filled_slots >= v_event.max_slots THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Event is full. No slots available.');
+  END IF;
+
+  -- Assign the next slot number
+  v_slot_number := v_event.filled_slots + 1;
+
+  -- Insert the registration with the assigned slot
+  INSERT INTO registrations (event_id, user_id, slot_number, status, payment_status)
+  VALUES (p_event_id, v_user_id, v_slot_number, 'pending', 'pending')
+  RETURNING jsonb_build_object(
+    'id', id,
+    'event_id', event_id,
+    'user_id', user_id,
+    'slot_number', slot_number,
+    'status', status,
+    'payment_status', payment_status,
+    'created_at', created_at
+  ) INTO v_registration;
+
+  -- Increment filled_slots
+  UPDATE events SET filled_slots = filled_slots + 1 WHERE id = p_event_id;
+
+  RETURN jsonb_build_object('success', true, 'registration', v_registration);
+END;
+$$;
+
+-- Grant execute permission to authenticated users
+GRANT EXECUTE ON FUNCTION register_for_event(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION register_for_event(UUID) TO anon;
 
 -- Decrement filled_slots on registration cancellation
 CREATE OR REPLACE FUNCTION decrement_filled_slots()

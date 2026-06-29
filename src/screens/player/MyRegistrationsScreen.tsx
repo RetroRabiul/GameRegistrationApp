@@ -123,6 +123,14 @@ export const MyRegistrationsScreen: React.FC = () => {
 
                 {event && (
                   <>
+                    {item.slot_number != null && (
+                      <View style={styles.slotRow}>
+                        <Ionicons name="grid-outline" size={14} color={colors.primary} />
+                        <Text style={[styles.slotText, { color: colors.primary, fontWeight: '700' }]}>
+                          Slot #{item.slot_number}
+                        </Text>
+                      </View>
+                    )}
                     <View style={styles.detailRow}>
                       <Ionicons name="calendar-outline" size={14} color={colors.textMuted} />
                       <Text style={[styles.detailText, { color: colors.textMuted }]}>
@@ -212,6 +220,8 @@ const styles = StyleSheet.create({
   regStatusText: { fontSize: FontSize.label, fontWeight: '700', textTransform: 'capitalize' },
   detailRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.xs },
   detailText: { fontSize: FontSize.body },
+  slotRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, marginBottom: Spacing.xs, paddingHorizontal: Spacing.md, paddingVertical: Spacing.xs, borderRadius: BorderRadius.metric },
+  slotText: { fontSize: FontSize.body },
   paymentRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, paddingTop: Spacing.md, marginTop: Spacing.md },
   paymentStatusContainer: { flexDirection: 'row', alignItems: 'center' },
   paymentLabel: { fontSize: FontSize.body, marginRight: Spacing.md },

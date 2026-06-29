@@ -58,9 +58,10 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ navigation
     setRegistering(false);
 
     if (result.success && result.registrationId) {
+      const slotInfo = result.slotNumber ? `\n\nYour assigned slot: #${result.slotNumber}` : '';
       Alert.alert(
         'Registration Successful!',
-        `You've registered for ${event.title}.\n\nAmount to pay: ${event.price}\n\nPlease complete the payment via bKash to confirm your spot.`,
+        `You've registered for ${event.title}.${slotInfo}\n\nAmount to pay: ${CURRENCY_SYMBOL}${event.price}\n\nPlease complete the payment via bKash to confirm your spot.`,
         [
           { text: 'Pay Later', style: 'cancel' },
           {
@@ -77,7 +78,7 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ navigation
         ]
       );
     } else {
-      Alert.alert('Error', 'Failed to register. You may already be registered or the event is full.');
+      Alert.alert('Registration Failed', result.message || 'Failed to register for this event.');
     }
   };
 
